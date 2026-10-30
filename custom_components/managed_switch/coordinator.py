@@ -235,7 +235,9 @@ class NetworkHub:
         """Include a loaded entry and update the locations whenever its tables change."""
         self.entries[entry.entry_id] = entry
         entry.async_on_unload(entry.runtime_data.slow.async_add_listener(self.async_update))
-        self.async_update()
+        # A switch that joins shows devices that were there all along (before only seen on an
+        # uplink, or on a switch that was not loaded yet): remember them without announcing.
+        self.async_update(announce=False)
 
     @callback
     def async_remove(self, entry: SwitchConfigEntry) -> None:
@@ -244,8 +246,8 @@ class NetworkHub:
         self.async_update()
 
     @callback
-    def async_update(self) -> None:
-        """Locate all devices again and tell the entities."""
+    def async_update(self, announce: bool = True) -> None:
+        """Locate all devices again and tell the entities; announce devices never seen before."""
         switches = {
             entry_id: switch_data(entry)
             for entry_id, entry in self.entries.items()
@@ -253,13 +255,13 @@ class NetworkHub:
         }
         self.locations = locate_macs(switches)
         known = self._known if self._known is not None else set()
-        first_run = not known
         new = [loc for mac, loc in self.locations.items() if mac not in known]
         if new:
+            announce = announce and bool(known)  # the very first run only learns
             known.update(loc.address for loc in new)
             # New devices are rare after the first run: save right away, no delayed write.
             self.hass.async_create_task(self._store.async_save({"known": sorted(known)}))
-            if not first_run:
+            if announce:
                 for location in new:
                     async_dispatcher_send(self.hass, SIGNAL_NEW_DEVICE, location)
         self._known = known

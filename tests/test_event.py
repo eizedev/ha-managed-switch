@@ -112,3 +112,20 @@ def hub_entry(hass: HomeAssistant, title: str) -> str:
     return next(
         e.entry_id for e in hass.config_entries.async_entries("managed_switch") if e.title == title
     )
+
+
+async def test_adding_a_switch_announces_nothing(hass: HomeAssistant) -> None:
+    from .conftest import make_entry as entry_for  # noqa: PLC0415
+
+    await setup(hass, "192.0.2.1")
+    hub = get_hub(hass)
+    assert hub._known is not None
+    hub._known.clear()  # as if switch-1 had never seen any of them,
+    hub._known.add("02:00:00:00:00:ff")  # after the first run
+    second = entry_for("192.0.2.3")
+    second.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(second.entry_id)
+    await hass.async_block_till_done()
+    # devices that were there all along, newly seen because a switch joined: not announced
+    assert state(hass, "event.switch_3_switch_events").state == "unknown"
+    assert state(hass, EVENT).state == "unknown"
