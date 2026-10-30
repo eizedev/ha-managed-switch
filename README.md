@@ -17,7 +17,6 @@ only: it never changes a setting.
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eizedev&repository=ha-managed-switch&category=integration)
 [![Open your Home Assistant instance and start setting up the integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=managed_switch)
-[![Open your Home Assistant instance and show the blueprint import dialog.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Feizedev%2Fha-managed-switch%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmanaged_switch%2Fnotify_switch_events.yaml)
 
 **Documentation: [ha-managed-switch.eize.dev](https://ha-managed-switch.eize.dev/)**
 
@@ -47,6 +46,15 @@ https://github.com/eizedev/ha-managed-switch
 
 Then add the integration once per switch. Requires Home Assistant 2026.10.3 or newer. Details:
 [Installation](https://ha-managed-switch.eize.dev/installation/).
+
+## Blueprints
+
+Ready automations for notifications; import one, then create an automation per switch. Details:
+[Events](https://ha-managed-switch.eize.dev/events/).
+
+| Blueprint | Notifies when | Import |
+| --- | --- | --- |
+| Managed switch events | an uplink or trunk goes down, a port comes back slower, the switch restarts, or a new device is plugged in directly (also behind other devices if you turn that on) | [![Open your Home Assistant instance and show the blueprint import dialog.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Feizedev%2Fha-managed-switch%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmanaged_switch%2Fnotify_switch_events.yaml) |
 
 ## Documentation
 
