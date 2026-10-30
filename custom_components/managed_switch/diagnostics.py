@@ -30,7 +30,7 @@ async def async_get_config_entry_diagnostics(
         },
         "system": {"descr": system.descr, "object_id": system.object_id},
         "temperatures": [
-            {"name": t.name, "celsius": t.celsius, "status": t.status} for t in slow.temperatures
+            {"index": t.index, "celsius": t.celsius, "status": t.status} for t in slow.temperatures
         ],
         "chassis": (
             {

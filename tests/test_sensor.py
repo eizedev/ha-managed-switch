@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from aiosnmpswitch import Chassis, Interface, Lldp, LldpRemote, Poe, PsePort, SystemInfo
+from aiosnmpswitch import Chassis, Interface, Lldp, LldpRemote, Poe, PsePort, SnmpError, SystemInfo
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -11,7 +11,7 @@ from custom_components.managed_switch.coordinator import SIGNAL_LOCATIONS, get_h
 from custom_components.managed_switch.devices import Connected, connected, summary
 from custom_components.managed_switch.entity import firmware, model, vendor
 
-from .conftest import make_entry, state, transport
+from .conftest import FakeTransport, make_entry, state, transport
 
 OPER = "1.3.6.1.2.1.2.2.1.8"
 
@@ -171,3 +171,34 @@ async def test_no_temperatures_on_a_1920s(hass: HomeAssistant) -> None:
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert not [s for s in hass.states.async_entity_ids("sensor") if "temperature" in s]
+
+
+async def test_temperature_that_appears_later(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.3")
+    entry.add_to_hass(hass)
+    FakeTransport.errors = {"192.0.2.3": {"1.3.6.1.4.1.11.2.83": SnmpError("timeout")}}
+    try:
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        assert hass.states.get("sensor.switch_3_temperature_pp") is None  # first read failed
+    finally:
+        FakeTransport.errors = {}
+    await entry.runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_3_temperature_pp").state == "54.0"
+    await entry.runtime_data.slow.async_refresh()  # known sensors are not added twice
+    await hass.async_block_till_done()
+    assert len([s for s in hass.states.async_entity_ids("sensor") if "temperature" in s]) == 2
+
+
+async def test_temperature_without_a_name(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.3")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    sensor = "1.3.6.1.4.1.11.2.83.2.1.1.1"
+    for column, value in ((1, 8), (2, 9), (3, 1), (4, 41), (5, 1)):  # a third sensor, no name
+        transport("192.0.2.3").set(f"{sensor}.{column}.68420483", value)
+    await entry.runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_3_temperature_68420483").state == "41.0"

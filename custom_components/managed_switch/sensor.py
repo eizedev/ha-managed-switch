@@ -153,11 +153,20 @@ async def async_setup_entry(
         for description in SWITCH_SENSORS
         if description.exists(runtime.slow.data)
     ]
-    entities += [
-        TemperatureSensor(entry, runtime.slow, t.index, t.name)
-        for t in runtime.slow.data.temperatures
-    ]
     async_add_entities(entities)
+
+    # Temperature sensors, also those first read later (a failed first read, a module added).
+    known: set[int] = set()
+
+    @callback
+    def add_temperatures() -> None:
+        new = [t for t in runtime.slow.data.temperatures if t.index not in known]
+        known.update(t.index for t in new)
+        if new:
+            async_add_entities(TemperatureSensor(entry, runtime.slow, t.index, t.name) for t in new)
+
+    add_temperatures()
+    entry.async_on_unload(runtime.slow.async_add_listener(add_temperatures))
 
     def add_port_sensors(new: list[Interface]) -> None:
         port_entities: list[SensorEntity] = []

@@ -11,8 +11,9 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - A temperature sensor per sensor the switch reports, in °C, named as the switch names it:
-  switches with the ENTITY-SENSOR-MIB, and the HPE Instant On 1930 from its own table
-  (aiosnmpswitch 0.3.0). The HPE 1920S reports no temperature. Diagnostics list the readings.
+  switches with the ENTITY-SENSOR-MIB, and the HPE Instant On 1930 8G 2SFP from its own table
+  (aiosnmpswitch 0.3.0). The HPE 1920S reports no temperature. A sensor that appears later gets
+  its entity with the next reading. Diagnostics list the readings, without sensor names.
 
 ## [0.3.0] - 2026-10-30
 

@@ -33,7 +33,8 @@ only: it never changes a setting.
   another switch, or the devices learned on the port, named from Home Assistant's device
   registry), PoE status, and on request received and sent traffic and errors.
 - One events entity per switch with a ready blueprint for notifications.
-- SNMPv3 (recommended) or v2c, standard MIBs (plus the HPE 1930's own sensor table): vendor-neutral. Tested on HPE OfficeConnect
+- SNMPv3 (recommended) or v2c, standard MIBs, plus the HPE 1930's own sensor table:
+  vendor-neutral. Tested on HPE OfficeConnect
   1920S and HPE Instant On 1930; other managed switches with SNMP are expected to work.
 
 ## Install
@@ -71,7 +72,8 @@ The SNMP part is the library [aiosnmpswitch](https://aiosnmpswitch.eize.dev/).
 ## Roadmap
 
 Planned work is in the [roadmap issues](https://github.com/eizedev/ha-managed-switch/issues?q=is%3Aissue+is%3Aopen+label%3Aroadmap):
-PoE power per port, fans and power supplies.
+PoE power per port, fans and power supplies ([#4](https://github.com/eizedev/ha-managed-switch/issues/4),
+[#5](https://github.com/eizedev/ha-managed-switch/issues/5)).
 
 ## Contributing
 
