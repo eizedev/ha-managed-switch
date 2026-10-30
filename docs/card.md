@@ -34,6 +34,7 @@ Install **Managed Switch Card** and reload the browser. Then edit a dashboard, *
 | ⇄ | link to another of your switches (LLDP) |
 | flash | PoE delivering power |
 | T | member of a trunk; the trunks are listed below the ports |
+| 1G, 100, 10 | the port's speed, so the state does not rest on colour alone (`show_speed`) |
 
 Under each port is the device connected to it, as the port's device sensor names it
 ([Entities](entities.md)). Hovering over a port shows all devices on it (screen readers read the
@@ -49,6 +50,7 @@ type: custom:managed-switch-card
 device_id: 0123456789abcdef0123456789abcdef  # the switch, chosen in the card's dialog
 title: Hallway                               # optional, else the switch's name
 show_names: true                             # device names under the ports (default)
+show_speed: true                             # speed in the ports: 1G, 100, 10 (default)
 show_rates: false                            # data rates (↓ in, ↑ out, Mbit/s); turn on the
                                              # ports' "received" and "sent" sensors first
 layout:                                      # optional: your own front panel, by port name
