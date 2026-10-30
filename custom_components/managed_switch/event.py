@@ -138,5 +138,9 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
                 "mac": location.address,
                 "name": registry_name(self.hass, location.address),
                 "ip_addresses": list(location.ip_addresses),
+                # More than one device on the port: the device is behind a router, access point
+                # or unmanaged switch there, maybe not plugged in at this switch at all.
+                "devices_on_port": location.devices_on_port,
+                "direct": location.devices_on_port == 1,
             },
         )

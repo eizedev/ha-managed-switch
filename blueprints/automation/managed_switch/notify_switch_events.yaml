@@ -30,6 +30,15 @@ blueprint:
               value: restarted
             - label: New device
               value: new_device
+    direct_only:
+      name: Only devices plugged in directly
+      description: >-
+        Report a new device only when it is alone on its port. A port to a router, an access
+        point or an unmanaged switch carries many devices; with this off, a phone joining the
+        router's Wi-Fi is reported as "seen via" the port that leads to the router.
+      default: true
+      selector:
+        boolean: {}
     notify_action:
       name: Notification
       description: What to do, for example a notification to your phone.
@@ -51,6 +60,7 @@ triggers:
 
 variables:
   event_types: !input event_types
+  direct_only: !input direct_only
   event_type: "{{ trigger.to_state.attributes.event_type }}"
   switch: >-
     {% set device = device_id(trigger.entity_id) %}
@@ -62,11 +72,14 @@ variables:
     {% if event_type == 'uplink_down' %}Port {{ port }} (uplink or trunk) lost its link.
     {% elif event_type == 'speed_dropped' %}Port {{ port }} runs at {{ a.speed }} Mbit/s instead of {{ a.previous }} Mbit/s.
     {% elif event_type == 'restarted' %}The switch restarted.
-    {% elif event_type == 'new_device' %}New device {{ a.name or a.mac }} on port {{ port }}.
+    {% elif event_type == 'new_device' and a.direct | default(true) %}New device {{ a.name or a.mac }} on port {{ port }}.
+    {% elif event_type == 'new_device' %}New device {{ a.name or a.mac }} seen via port {{ port }} (with {{ a.devices_on_port - 1 }} other devices).
     {% endif %}
 
 conditions:
   - condition: template
-    value_template: "{{ event_type in event_types }}"
+    value_template: >-
+      {{ event_type in event_types and not (event_type == 'new_device' and direct_only
+         and not trigger.to_state.attributes.direct | default(true)) }}
 
 actions: !input notify_action
