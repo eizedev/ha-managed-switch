@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 from pathlib import Path
+import sys
 
 from playwright.async_api import Locator, Page, async_playwright
 import yaml
@@ -79,7 +80,10 @@ async def main(args: argparse.Namespace) -> None:
             locale="en-US",
         )
         page = await context.new_page()
-        page.on("console", lambda m: print("console:", m.text) if m.type == "error" else None)
+        page.on(
+            "console",
+            lambda m: print("console:", m.text, file=sys.stderr) if m.type == "error" else None,
+        )
         try:
             await tour(page, args.card)
         except Exception:

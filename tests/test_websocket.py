@@ -66,3 +66,17 @@ async def test_unknown_or_foreign_device(
     )
     await client.send_json_auto_id({"type": "managed_switch/ports", "device_id": foreign.id})
     assert (await client.receive_json())["error"]["code"] == "not_found"
+
+
+async def test_unloaded_switch_or_bad_request(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    await setup(hass, "192.0.2.1")
+    client = await hass_ws_client(hass)
+    switch = device_id(hass, "02:00:00:00:00:02")
+    [entry] = hass.config_entries.async_entries("managed_switch")
+    assert await hass.config_entries.async_unload(entry.entry_id)
+    await client.send_json_auto_id({"type": "managed_switch/ports", "device_id": switch})
+    assert (await client.receive_json())["error"]["code"] == "not_found"
+    await client.send_json_auto_id({"type": "managed_switch/ports"})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"

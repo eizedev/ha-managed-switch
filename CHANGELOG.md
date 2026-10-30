@@ -13,7 +13,9 @@ All notable changes to this project are documented here. The format follows
 - WebSocket command `managed_switch/ports`: a switch's ports with their kind (port or trunk), trunk
   members, uplinks, PoE and the entity of each role, for the
   [switch card](https://github.com/eizedev/managed-switch-card).
-- Docs: the switch card; the demo photographs it (`screenshots.py --card`).
+- Docs: the switch card and the command's reply; the demo photographs the card
+  (`screenshots.py --card`). The card is installed separately; nothing changes for existing
+  switches.
 - Screenshots in the README and on the website, from a demo instance (`scripts/demo/`) with three
   stand-in switches answering SNMP from the test data.
 - Docs: "Ideas and automations" with six example packages, loaded by the demo on every start.

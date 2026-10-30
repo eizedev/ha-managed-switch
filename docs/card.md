@@ -28,15 +28,19 @@ Install **Managed Switch Card** and reload the browser. Then edit a dashboard, *
 | green | link at 1 Gbit/s or more |
 | orange | link at 100 Mbit/s |
 | red | link at 10 Mbit/s |
-| white | no link |
-| grey | unknown (the switch did not answer) |
+| blue | link, speed unknown (the port's speed sensor is off or has no value) |
+| empty | no link |
+| grey | unknown: the switch did not answer, or the port's link sensor is off |
 | arrow | link to another of your switches |
 | flash | PoE delivering power |
 | T | member of a trunk; the trunks are listed below the ports |
 
 Under each port is the device connected to it, as the port's device sensor names it
-([Entities](entities.md)). Hover over a port, or tap and hold, for all devices on it; a click opens
-the device sensor. The header shows the switch's PoE consumption and budget.
+([Entities](entities.md)). Hovering over a port shows all devices on it (screen readers read the
+same); a click opens the device sensor. The header shows the switch's PoE consumption and budget.
+
+While Home Assistant starts or a switch is set up again, the card keeps its last picture and tries
+again after 15 seconds. With an integration older than 0.2.0 it says so.
 
 ## Options
 
@@ -58,3 +62,31 @@ The card knows the front panel of the tested models (HPE OfficeConnect 1920S 8G,
 1930 8G 2SFP). Other switches get their ports in one row, or odd numbers above even ones beyond
 twelve; `layout` draws them as your switch looks. A layout for your model is welcome in the
 [card's repository](https://github.com/eizedev/managed-switch-card/blob/main/CONTRIBUTING.md).
+
+## For developers: what the card reads
+
+The card asks the integration with the WebSocket command `managed_switch/ports` and a switch's
+`device_id`. Every logged-in user may ask, as for entity states; the reply holds the switch's
+model, firmware and port descriptions, no address or credentials. A device that is not a loaded
+managed switch gives the error `not_found`.
+
+```json
+{
+  "switch": {"entry_id": "…", "name": "Hallway", "vendor": "HPE", "model": "…",
+             "firmware": "…", "object_id": "1.3.6.1.4.1.…",
+             "entities": {"boot_time": "sensor.…", "poe_consumption": "sensor.…",
+                          "poe_budget": "sensor.…", "port_event": "event.…"}},
+  "ports": [
+    {"if_index": 1, "name": "1", "alias": "…", "kind": "ethernet", "trunk": null,
+     "members": [], "uplink": false, "poe": true,
+     "entities": {"link": "binary_sensor.…", "speed": "sensor.…", "device": "sensor.…",
+                  "poe": "sensor.…", "received": "sensor.…", "sent": "sensor.…",
+                  "errors": "sensor.…"}}
+  ]
+}
+```
+
+`kind` is `ethernet` or `trunk`; a trunk lists its members' `if_index` in `members`, and a member
+names its trunk in `trunk`. An entity the integration does not create for a port (PoE on a trunk or on
+a port without PoE) is `null`; disabled entities are
+listed. Renaming or removing a field is a breaking change of the integration.

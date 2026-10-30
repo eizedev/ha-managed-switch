@@ -3,6 +3,9 @@
 The card (managed-switch-card) asks for a device and draws its front panel; it needs to know which
 entity belongs to which port and role, which entity IDs (that follow the user's language) do not
 say reliably.
+
+Every logged-in user may ask, as for entity states; the reply holds the switch's model, firmware
+and port descriptions, no address or credentials. docs/card.md describes the reply.
 """
 
 from __future__ import annotations
@@ -18,7 +21,7 @@ import probatio
 
 from .const import DOMAIN
 from .coordinator import SwitchConfigEntry, get_hub, switch_data
-from .entity import firmware, model, ports, vendor
+from .entity import entry_uid, firmware, model, ports, vendor
 
 PORT_KEYS = {
     "link": "binary_sensor",
@@ -66,7 +69,7 @@ def ws_ports(
         connection.send_error(msg["id"], "not_found", "No loaded managed switch with this device")
         return
     registry = er.async_get(hass)
-    uid = entry.unique_id or entry.entry_id
+    uid = entry_uid(entry)
 
     def entity_id(platform: str, unique_id: str) -> str | None:
         return registry.async_get_entity_id(platform, DOMAIN, unique_id)

@@ -116,13 +116,17 @@ def link(name: str, target: Path) -> None:
 
 async def main(args: argparse.Namespace) -> None:
     """Start the stand-in switches and Home Assistant; onboard and set up on a first run."""
+    # A demo that is still running would lose its configuration below and confuse onboarding.
+    with contextlib.suppress(OSError):
+        _, writer = await asyncio.open_connection("127.0.0.1", args.port)
+        writer.close()
+        sys.exit(f"Port {args.port} is in use: is a demo instance still running? Stop it first.")
     if not args.keep and CONFIG.exists():
         shutil.rmtree(CONFIG)
     first_run = not CONFIG.exists()
     (CONFIG / "custom_components").mkdir(parents=True, exist_ok=True)
-    (CONFIG / "www").mkdir(
-        exist_ok=True
-    )  # /local/ (the switch card) exists only if it does at start
+    # /local/ (the switch card) is served only if www/ exists when Home Assistant starts
+    (CONFIG / "www").mkdir(exist_ok=True)
     link("managed_switch", REPO / "custom_components" / "managed_switch")
     link("demo_devices", HERE / "demo_devices")
     ideas = CONFIG / "ideas"
