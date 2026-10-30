@@ -32,6 +32,8 @@ needs these MIBs, each for part of the integration:
 | POWER-ETHERNET-MIB | `1.3.6.1.2.1.105` | no PoE entities |
 | IP-MIB | `1.3.6.1.2.1.4` | no IP addresses from the switch (optional) |
 | ENTITY-MIB | `1.3.6.1.2.1.47` | model and firmware taken from the system description, which not every vendor writes as "model, firmware" (optional) |
+| ENTITY-SENSOR-MIB | `1.3.6.1.2.1.99` | no temperatures (optional) |
+| HPE Instant On 1930: sensor table | `1.3.6.1.4.1.11.2.83.2`, `1.3.6.1.4.1.11.2.83.3` | no temperatures on this model, which has no ENTITY-SENSOR-MIB (optional) |
 
 **LLDP** should be on on every switch (most managed switches have it on by default). Only through
 LLDP does the integration recognise the links between your switches; without it, a neighbour

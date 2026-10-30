@@ -143,3 +143,31 @@ async def test_device_sensor_writes_only_when_its_devices_change(hass: HomeAssis
     after = state(hass, sensor)
     assert after.last_reported != before.last_reported
     assert after.attributes["device_count"] == before.attributes["device_count"] - 1
+
+
+async def test_temperatures_of_a_1930(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.3")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    pp = state(hass, "sensor.switch_3_temperature_pp")
+    assert (pp.state, pp.attributes["unit_of_measurement"]) == ("54.0", "°C")
+    assert state(hass, "sensor.switch_3_temperature_phy").state == "55.0"
+    # a sensor that reports itself not working shows no value
+    transport("192.0.2.3").set("1.3.6.1.4.1.11.2.83.2.1.1.1.5.68420481", 3)
+    await entry.runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_3_temperature_pp").state == "unknown"
+    # and one that is gone as well
+    transport("192.0.2.3").set("1.3.6.1.4.1.11.2.83.2.1.1.1.1.68420482", 10)
+    await entry.runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_3_temperature_phy").state == "unknown"
+
+
+async def test_no_temperatures_on_a_1920s(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.1")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert not [s for s in hass.states.async_entity_ids("sensor") if "temperature" in s]
