@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from aiosnmpswitch import Interface, SystemInfo
 from aiosnmpswitch.helpers import is_ethernet_port, lag_members, port_name
 from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
@@ -57,6 +59,32 @@ def device_info(entry: SwitchConfigEntry) -> DeviceInfo:
     if entry.unique_id:
         info["connections"] = {(CONNECTION_NETWORK_MAC, entry.unique_id)}
     return info
+
+
+@callback
+def async_add_per_port(
+    entry: SwitchConfigEntry,
+    coordinators: list[DataUpdateCoordinator[Any]],
+    add: Callable[[list[Interface]], None],
+    wanted: Callable[[Interface], bool] = lambda _: True,
+) -> None:
+    """Call ``add`` with the ports that have no entities yet, now and after every update.
+
+    A trunk created later, or PoE ports read only after a failed first try, so get their
+    entities without reloading the entry. Entities of ports that vanish stay, unavailable.
+    """
+    done: set[int] = set()
+
+    @callback
+    def _add_new() -> None:
+        new = [i for i in ports(entry) if i.index not in done and wanted(i)]
+        if new:
+            done.update(i.index for i in new)
+            add(new)
+
+    _add_new()
+    for coordinator in coordinators:
+        entry.async_on_unload(coordinator.async_add_listener(_add_new))
 
 
 def ports(entry: SwitchConfigEntry) -> list[Interface]:

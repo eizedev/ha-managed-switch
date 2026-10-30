@@ -222,3 +222,57 @@ def test_manifest_requires_the_tested_library() -> None:
     manifest = Path(__file__).parents[1] / "custom_components" / "managed_switch" / "manifest.json"
     requirements = json.loads(manifest.read_text(encoding="utf-8"))["requirements"]
     assert requirements == [f"aiosnmpswitch=={importlib.metadata.version('aiosnmpswitch')}"]
+
+
+async def test_a_shared_port_is_named_after_the_gateway_then_a_parent(hass: HomeAssistant) -> None:
+    await setup(hass, *ALL)
+    port_1 = state(hass, "sensor.switch_1_port_1_device")
+    macs = [d["mac"] for d in port_1.attributes["devices"]]
+    assert len(macs) > 2
+    registry = dr.async_get(hass)
+    # a client of the router, linked to its parent device (as router integrations do)
+    other = MockConfigEntry(domain="router_vendor")
+    other.add_to_hass(hass)
+    parent = registry.async_get_or_create(
+        config_entry_id=other.entry_id,
+        connections={(dr.CONNECTION_NETWORK_MAC, macs[-1])},
+        name="Zz Access Point",
+    )
+    client = registry.async_get_or_create(
+        config_entry_id=other.entry_id,
+        connections={(dr.CONNECTION_NETWORK_MAC, macs[0])},
+        name="Aa Phone",
+    )
+    registry.async_update_device(client.id, via_device_id=parent.id)
+    get_hub(hass).async_update()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_1_port_1_device").state.startswith("Zz Access Point +")
+    # the internet gateway (UPnP) comes before that
+    upnp = MockConfigEntry(domain="upnp")
+    upnp.add_to_hass(hass)
+    registry.async_get_or_create(
+        config_entry_id=upnp.entry_id,
+        connections={(dr.CONNECTION_NETWORK_MAC, macs[1])},
+        name="Router",
+    )
+    get_hub(hass).async_update()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_1_port_1_device").state.startswith("Router +")
+
+
+async def test_ports_and_poe_ports_that_appear_later_get_entities(hass: HomeAssistant) -> None:
+    FakeTransport.errors = {"192.0.2.1": {"1.3.6.1.2.1.105.1": SnmpError("genErr")}}
+    [entry] = await setup(hass, "192.0.2.1")
+    assert hass.states.get("sensor.switch_1_port_1_poe") is None
+    FakeTransport.errors = {}
+    await entry.runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "sensor.switch_1_port_1_poe").state == "searching"
+    fake = transport("192.0.2.1")
+    fake.set("1.3.6.1.2.1.2.2.1.3.9", 6)  # a ninth Ethernet port
+    fake.set("1.3.6.1.2.1.31.1.1.1.1.9", b"9")
+    fake.set("1.3.6.1.2.1.2.2.1.8.9", 1)
+    await entry.runtime_data.fast.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "binary_sensor.switch_1_port_9_link").state == "on"
+    assert hass.states.get("sensor.switch_1_port_9_speed") is not None

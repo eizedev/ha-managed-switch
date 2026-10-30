@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .coordinator import FastCoordinator, SwitchConfigEntry
-from .entity import PortEntity, ports
+from .entity import PortEntity, async_add_per_port
 
 PARALLEL_UPDATES = 0
 LINK = BinarySensorEntityDescription(
@@ -25,9 +25,12 @@ async def async_setup_entry(
     entry: SwitchConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Add a link sensor per port."""
-    async_add_entities(
-        LinkSensor(entry, entry.runtime_data.fast, LINK, interface) for interface in ports(entry)
+    """Add a link sensor per port, also for ports that appear later."""
+    fast = entry.runtime_data.fast
+    async_add_per_port(
+        entry,
+        [fast, entry.runtime_data.slow],
+        lambda new: async_add_entities(LinkSensor(entry, fast, LINK, i) for i in new),
     )
 
 

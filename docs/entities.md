@@ -35,6 +35,10 @@ IP addresses (if a switch knows them) and whether the device announced itself by
   by the name it announces.
 - Other devices are named from Home Assistant's device registry: any device of another
   integration with that MAC address. Unknown devices show their MAC address.
+- On a port with several devices, the one that names the port best comes first: the internet
+  gateway (the router as the UPnP integration knows it), then a device the others are linked to
+  in the registry (an access point whose integration links its clients to it), then the rest by
+  name. So the port to your router shows `Router +13`, not the first client in the alphabet.
 - Several devices on one port mean something is between: an access point with its Wi-Fi
   clients, a router, or an unmanaged switch.
 - The links between your switches show the other switch, not everything behind it, as long as

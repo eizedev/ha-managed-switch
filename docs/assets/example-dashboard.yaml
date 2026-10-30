@@ -11,6 +11,8 @@ views:
       - type: markdown
         title: Which device is on which port
         content: |
+          {#- Names come from the devices themselves: escape what Markdown would read as table, link or image. -#}
+          {%- macro md(v) -%}{{ (v ~ '') | replace('\r', ' ') | replace('\n', ' ') | replace('\\', '\\\\') | replace('|', '\\|') | replace('[', '\\[') | replace(']', '\\]') | replace('!', '\\!') | replace('<', '&lt;') | replace('>', '&gt;') | replace('`', '\\`') | replace('*', '\\*') | replace('_', '\\_') }}{%- endmacro -%}
           {% set ports = states.sensor
              | selectattr('entity_id', 'in', integration_entities('managed_switch'))
              | selectattr('attributes.device_count', 'defined')
@@ -18,12 +20,11 @@ views:
           {% set ns = namespace(switches=[]) %}
           {% for port in ports %}{% set ns.switches = ns.switches + [device_id(port.entity_id)] %}{% endfor %}
           {% for switch in ns.switches | unique %}
-          ### {{ device_attr(switch, 'name_by_user') or device_attr(switch, 'name') }}
+          ### {{ md(device_attr(switch, 'name_by_user') or device_attr(switch, 'name')) }}
 
           | Port | Link | Speed | Device |
-          | --- | --- | --- | --- |
+          | --- | :---: | ---: | --- |
           {% for port in ports if device_id(port.entity_id) == switch -%}
-          {% set device = port.state if port.state not in ['unknown', 'unavailable'] else '' -%}
-          | {{ port.attributes.port }} | {{ '🟢' if port.attributes.link else '⚪' }} | {{ port.attributes.speed ~ ' Mbit/s' if port.attributes.speed else '' }} | {{ device | regex_replace('[|\\[\\]()<>!`*_\\n]', ' ') | truncate(60) }} |
+          | [{{ md(port.attributes.port) }}](/history?entity_id={{ port.entity_id }}) | {{ '🟢' if port.attributes.link else '⚪' }} | {{ (port.attributes.speed ~ ' Mbit/s') if port.attributes.speed else '' }} | {{ md(port.state) if port.state not in ['unknown', 'unavailable'] else '' }} |
           {% endfor %}
           {% endfor %}

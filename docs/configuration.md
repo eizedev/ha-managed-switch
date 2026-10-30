@@ -39,8 +39,9 @@ when LLDP is off), so a new address later is a matter of *Reconfigure* (the thre
 entry); the entities stay. Turning LLDP on or off may change which MAC address is found; the
 integration then reports a different switch, and the entry has to be added again.
 
-Ports are read when the entry loads. A port, trunk or PoE port that appears later (a new trunk,
-PoE read only after a failed first try) gets its entities after *Reload* of the entry. When the switch rejects the
+A port, trunk or PoE port that appears later (a new trunk, PoE read only after a failed first try)
+gets its entities with the next reading. Entities of a port that disappears stay, unavailable;
+remove them on the entity's page if the port is gone for good. When the switch rejects the
 credentials, Home Assistant asks for new ones (*Reauthenticate*).
 
 ## Options
