@@ -55,10 +55,9 @@ def registry_name(hass: HomeAssistant, mac: str) -> str | None:
 
 def _is_gateway(hass: HomeAssistant, devices: list[dr.DeviceEntry]) -> bool:
     for device in devices:
-        for entry_id in device.config_entries:
-            entry = hass.config_entries.async_get_entry(entry_id)
-            if entry is not None and entry.domain in GATEWAY_DOMAINS:
-                return True
+        entry = hass.config_entries.async_get_entry(device.config_entry_id)
+        if entry is not None and entry.domain in GATEWAY_DOMAINS:
+            return True
     return False
 
 
