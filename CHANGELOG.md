@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `new_device` tells whether the device is alone on its port (`direct`, `devices_on_port`). The
+  blueprint reports only devices plugged in directly unless *Only devices plugged in directly*
+  is off; a phone joining the router's Wi-Fi was reported as new on the port towards the router
+  ([#19](https://github.com/eizedev/ha-managed-switch/issues/19)).
+
 ## [0.2.0] - 2026-10-30
 
 ### Added

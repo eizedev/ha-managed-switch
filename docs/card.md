@@ -4,7 +4,7 @@
 web interface: every port coloured by link and speed, uplinks to other switches, trunk members,
 PoE delivering power, and the device on each port.
 
-![Three switches as cards: green ports at 1 Gbit/s, orange at 100 Mbit/s, white without link, arrows on the links between the switches, the device name under each port](assets/screenshots/card.png)
+![Three switches as cards: green ports at 1 Gbit/s, orange at 100 Mbit/s, empty without link, a link symbol on the ports between the switches, the device name under each port](assets/screenshots/card.png)
 
 ## Install
 
@@ -31,7 +31,7 @@ Install **Managed Switch Card** and reload the browser. Then edit a dashboard, *
 | blue | link, speed unknown (the port's speed sensor is off or has no value) |
 | empty | no link |
 | grey | unknown: the switch did not answer, or the port's link sensor is off |
-| arrow | link to another of your switches |
+| ⇄ | link to another of your switches (LLDP) |
 | flash | PoE delivering power |
 | T | member of a trunk; the trunks are listed below the ports |
 

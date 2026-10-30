@@ -91,7 +91,28 @@ async def test_new_device(hass: HomeAssistant) -> None:
     attributes = last(hass)
     assert attributes["event_type"] == "new_device"
     assert (attributes["mac"], attributes["port"]) == (forgotten, location.port_name)
+    assert attributes["devices_on_port"] == location.devices_on_port
+    assert attributes["direct"] is (location.devices_on_port == 1)
     assert entry.entry_id == location.switch
+
+
+async def test_new_device_alone_or_shared(hass: HomeAssistant) -> None:
+    entries = await setup(hass, "192.0.2.1", "192.0.2.2", "192.0.2.3")
+    events = {e.entry_id: f"event.{e.title.replace('-', '_')}_switch_events" for e in entries}
+    hub = get_hub(hass)
+    assert hub._known is not None
+    seen = {}
+    for alone in (True, False):
+        mac, loc = next(
+            (m, loc) for m, loc in hub.locations.items() if (loc.devices_on_port == 1) is alone
+        )
+        hub._known.pop(mac, None)
+        hub.async_update()
+        await hass.async_block_till_done()
+        attributes = state(hass, events[loc.switch]).attributes
+        seen[alone] = (attributes["mac"], attributes["direct"])
+        assert attributes["devices_on_port"] == loc.devices_on_port
+        assert seen[alone] == (mac, alone)
 
 
 async def test_new_device_on_another_switch(hass: HomeAssistant) -> None:

@@ -8,19 +8,25 @@ attribute `event_type` says which:
 | `uplink_down` | a link to another of your switches, a trunk or a trunk member lost its link | `port`, `if_index` |
 | `speed_dropped` | a port is up at a lower speed than it had before (a bad cable, a port that negotiated 100 Mbit/s) | `port`, `if_index`, `speed`, `previous` |
 | `restarted` | the switch booted since the last reading | `boot_time` |
-| `new_device` | a device is seen for the first time on any of your switches | `port`, `if_index`, `mac`, `name`, `ip_addresses` |
+| `new_device` | a device is seen for the first time on any of your switches | `port`, `if_index`, `mac`, `name`, `ip_addresses`, `devices_on_port`, `direct` |
 
 Nothing fires for the state at startup. New devices are remembered across restarts (the 5000
 seen most recently); on the very first run, and for a switch that is added or whose address table is read for
 the first time, all devices are taken as known. Phones and laptops that use a new random MAC
-address for a network now and then appear as new each time. The event's attributes, including
+address for a network now and then appear as new each time.
+
+`direct` is true when the device is alone on its port. On a port that carries several devices
+(`devices_on_port`), it sits behind a router, an access point or an unmanaged switch there: a
+phone joining the router's Wi-Fi shows up on the port that leads to the router, although nothing
+was plugged in. The blueprint reports only direct devices unless you turn that off. The event's attributes, including
 MAC and IP addresses, are kept in Home Assistant's history like any other state.
 
 ## Blueprint
 
 [![Open your Home Assistant instance and show the blueprint import dialog.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Feizedev%2Fha-managed-switch%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fmanaged_switch%2Fnotify_switch_events.yaml)
 
-*Managed switch events* sends a notification for the events you choose. Pick the events entity
+*Managed switch events* sends a notification for the events you choose; new devices only when
+plugged in directly, unless you turn *Only devices plugged in directly* off. Pick the events entity
 of a switch and an action, for example a notification to your phone; by default it creates a
 persistent notification.
 
