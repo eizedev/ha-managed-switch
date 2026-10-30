@@ -57,19 +57,24 @@ async def test_snmpv2c_on_a_1930(hass: HomeAssistant) -> None:
 
 
 async def test_identity_from_the_ports_without_lldp(hass: HomeAssistant) -> None:
+    globals()["_hass"] = hass
     FakeTransport.errors = {"192.0.2.1": {"1.0.8802.1.1.2.1.3": SnmpError("genErr")}}
     with pytest.raises(SnmpError):  # get_lldp itself raises; the probe needs LLDP or ports
         await (await _probe_switch("192.0.2.1"))
     FakeTransport.errors = {}
 
 
+_hass: Any = None
+
+
 async def _probe_switch(host: str) -> Any:
     from custom_components.managed_switch.config_flow import _probe  # noqa: PLC0415
 
-    return _probe(entry_data(host))
+    return _probe(_hass, entry_data(host))
 
 
 async def test_identity_falls_back_to_the_lowest_port_mac(hass: HomeAssistant) -> None:
+    globals()["_hass"] = hass
     probe = await _probe_switch("192.0.2.1")
     original = FakeTransport.walk
 
@@ -78,11 +83,18 @@ async def test_identity_falls_back_to_the_lowest_port_mac(hass: HomeAssistant) -
             return []
         return await original(self, oid)
 
+    original_get = FakeTransport.get
+
+    async def get(self: FakeTransport, oids: Any) -> Any:
+        return await original_get(self, [o for o in oids if not o.startswith("1.0.8802")])
+
     FakeTransport.walk = walk  # type: ignore[method-assign]
+    FakeTransport.get = get  # type: ignore[method-assign]
     try:
         identity, name = await probe
     finally:
         FakeTransport.walk = original  # type: ignore[method-assign]
+        FakeTransport.get = original_get  # type: ignore[method-assign]
     assert identity == "02:00:00:00:00:01"
     assert name == "switch-1"
 
@@ -95,12 +107,19 @@ async def test_no_identity(hass: HomeAssistant) -> None:
             return []
         return await original(self, oid)
 
+    original_get = FakeTransport.get
+
+    async def get(self: FakeTransport, oids: Any) -> Any:
+        return await original_get(self, [o for o in oids if not o.startswith("1.0.8802")])
+
     result = await start(hass)
     FakeTransport.walk = walk  # type: ignore[method-assign]
+    FakeTransport.get = get  # type: ignore[method-assign]
     try:
         result = await hass.config_entries.flow.async_configure(result["flow_id"], V3)
     finally:
         FakeTransport.walk = original  # type: ignore[method-assign]
+        FakeTransport.get = original_get  # type: ignore[method-assign]
     assert result["errors"] == {"base": "no_identity"}
 
 

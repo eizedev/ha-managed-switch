@@ -18,7 +18,7 @@ package = false
 
 [tool.uv.sources]
 # Until aiosnmpswitch is on PyPI: the library at a fixed commit.
-aiosnmpswitch = { git = "https://github.com/eizedev/aiosnmpswitch", rev = "8951fe36cef775bdb434f6bc1c080ab88cd243d2" }
+aiosnmpswitch = { git = "https://github.com/eizedev/aiosnmpswitch", rev = "aee5c6b13965188e68d57c8bb97a3e84a27c6428" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

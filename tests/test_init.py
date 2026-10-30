@@ -199,3 +199,15 @@ async def test_setup_closes_the_switch_on_any_error(hass: HomeAssistant) -> None
     ):
         await hass.config_entries.async_setup(entry.entry_id)
     assert transport("192.0.2.1").closed
+
+
+async def test_one_engine_for_all_switches_closed_at_stop(hass: HomeAssistant) -> None:
+    from homeassistant.const import EVENT_HOMEASSISTANT_STOP  # noqa: PLC0415
+
+    await setup(hass, "192.0.2.1", "192.0.2.2")
+    engines = {id(t.options["engine"]) for t in FakeTransport.instances}
+    assert len(engines) == 1
+    engine = FakeTransport.instances[0].options["engine"]
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+    await hass.async_block_till_done()
+    assert engine.closed
