@@ -31,6 +31,7 @@ needs these MIBs, each for part of the integration:
 | IEEE8023-LAG-MIB | `1.2.840.10006.300.43` | no trunks |
 | POWER-ETHERNET-MIB | `1.3.6.1.2.1.105` | no PoE entities |
 | IP-MIB | `1.3.6.1.2.1.4` | no IP addresses from the switch (optional) |
+| ENTITY-MIB | `1.3.6.1.2.1.47` | model and firmware taken from the system description, which not every vendor writes as "model, firmware" (optional) |
 
 **LLDP** should be on on every switch (most managed switches have it on by default). Only through
 LLDP does the integration recognise the links between your switches; without it, a neighbour

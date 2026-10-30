@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-30
+
+### Changed
+
+- Model and firmware of a switch come from its ENTITY-MIB chassis entry when it has one
+  (aiosnmpswitch 0.2.0), else from the system description as before. Switches whose description
+  is not "model, firmware" (Cisco and others) show the right model; HPE switches show the same as
+  before ([#10](https://github.com/eizedev/ha-managed-switch/issues/10)).
+
 ## [0.2.2] - 2026-10-30
 
 ### Fixed
@@ -81,7 +90,8 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.1...v0.2.0
