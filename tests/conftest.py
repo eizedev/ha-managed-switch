@@ -77,6 +77,15 @@ class FakeTransport(RecordedTransport):
         self.closed = True
 
 
+class FakeEngine:
+    """Stands in for pysnmp's engine shared by all switches."""
+
+    closed = False
+
+    def close_dispatcher(self) -> None:
+        self.closed = True
+
+
 def transport(host: str) -> FakeTransport:
     """The newest fake transport created for ``host``."""
     return next(t for t in reversed(FakeTransport.instances) if t.host == host)
@@ -91,9 +100,13 @@ def fake_snmp(monkeypatch: pytest.MonkeyPatch) -> Generator[None]:
             raise SnmpError("cannot resolve the switch address: gaierror")
         return FakeTransport(host, load_recording(HOSTS[host]), {"auth": auth, **options})
 
+    async def create_engine() -> object:
+        return FakeEngine()
+
     FakeTransport.instances = []
     FakeTransport.errors = {}
     monkeypatch.setattr(PysnmpTransport, "create", create)
+    monkeypatch.setattr("custom_components.managed_switch.create_engine", create_engine)
     yield
     FakeTransport.errors = {}
 

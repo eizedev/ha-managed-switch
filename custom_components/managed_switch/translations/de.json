@@ -20,6 +20,9 @@
         "description": "Die Community von {host} mit Lesezugriff. [Hilfe]({docs})",
         "data": {
           "community": "Community"
+        },
+        "data_description": {
+          "community": "Die Community mit Lesezugriff, wie sie auf dem Switch eingestellt ist."
         }
       },
       "usm": {
@@ -34,7 +37,10 @@
         },
         "data_description": {
           "auth_protocol": "Manche ältere Switches bieten nur SHA (SHA-1) oder MD5.",
-          "priv_protocol": "Manche ältere Switches bieten nur DES."
+          "priv_protocol": "Manche ältere Switches bieten nur DES.",
+          "user": "Der Benutzername auf dem Switch.",
+          "auth_key": "Leer lassen, wenn das Authentifizierungsprotokoll „Keins“ ist.",
+          "priv_key": "Leer lassen, wenn das Verschlüsselungsprotokoll „Keins“ ist."
         }
       },
       "reconfigure": {
@@ -44,6 +50,11 @@
           "host": "Host",
           "port": "Port",
           "snmp_version": "SNMP-Version"
+        },
+        "data_description": {
+          "host": "Adresse oder Name des Switches.",
+          "port": "UDP-Port des SNMP-Agents, meist 161.",
+          "snmp_version": "SNMPv1 und v2c senden die Community im Klartext."
         }
       }
     },
@@ -70,6 +81,10 @@
         "data": {
           "fast_interval": "Ports: Link, Geschwindigkeit und Datenrate",
           "slow_interval": "Adresstabelle, LLDP, PoE und Spanning Tree"
+        },
+        "data_description": {
+          "fast_interval": "Sekunden zwischen zwei Abfragen der Ports.",
+          "slow_interval": "Sekunden zwischen zwei Abfragen der Tabellen; Switches vergessen stille Geräte nach etwa fünf Minuten."
         }
       }
     }

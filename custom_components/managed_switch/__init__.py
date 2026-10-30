@@ -13,15 +13,13 @@ from aiosnmpswitch import (
     SnmpError,
     SnmpSwitch,
     UsmAuth,
+    create_engine,
 )
-from homeassistant.const import CONF_HOST, CONF_PORT, Platform
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.const import CONF_HOST, CONF_PORT, EVENT_HOMEASSISTANT_STOP, Platform
+from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
-
-# Loaded here, while Home Assistant imports the integration outside the event loop: pysnmp reads
-# many modules on first use.
-import pysnmp.hlapi.v3arch.asyncio  # noqa: F401
+from homeassistant.helpers.singleton import singleton
 
 from .const import (
     CONF_AUTH_KEY,
@@ -61,7 +59,20 @@ def auth_from(data: Mapping[str, Any]) -> CommunityAuth | UsmAuth:
     )
 
 
-async def connect(data: Mapping[str, Any]) -> SnmpSwitch:
+@singleton(f"{DOMAIN}_engine")
+async def get_engine(hass: HomeAssistant) -> Any:
+    """Return the SNMP engine all switches share, prepared outside the event loop."""
+    engine = await create_engine()
+
+    @callback
+    def _close(_: Event) -> None:
+        engine.close_dispatcher()
+
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close)
+    return engine
+
+
+async def connect(hass: HomeAssistant, data: Mapping[str, Any]) -> SnmpSwitch:
     """Create a client for the switch an entry's data describes."""
     transport = await PysnmpTransport.create(
         data[CONF_HOST],
@@ -69,6 +80,7 @@ async def connect(data: Mapping[str, Any]) -> SnmpSwitch:
         port=int(data.get(CONF_PORT, DEFAULT_PORT)),
         timeout=REQUEST_TIMEOUT,
         retries=REQUEST_RETRIES,
+        engine=await get_engine(hass),
     )
     return SnmpSwitch(transport)
 
@@ -76,7 +88,7 @@ async def connect(data: Mapping[str, Any]) -> SnmpSwitch:
 async def async_setup_entry(hass: HomeAssistant, entry: SwitchConfigEntry) -> bool:
     """Connect to one switch and start polling it."""
     try:
-        switch = await connect(entry.data)
+        switch = await connect(hass, entry.data)
     except SnmpError as err:
         raise ConfigEntryNotReady(translation_domain=DOMAIN, translation_key="resolve") from err
     fast = FastCoordinator(hass, entry, switch)
@@ -85,12 +97,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SwitchConfigEntry) -> bo
     try:
         await slow.async_config_entry_first_refresh()
         await fast.async_config_entry_first_refresh()
-    except ConfigEntryAuthFailed, ConfigEntryNotReady:
-        await switch.close()
+        hub = get_hub(hass)
+        await hub.async_load()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except BaseException:
+        await switch.close()  # no SNMP engine left behind for every retry
         raise
-    hub = get_hub(hass)
-    await hub.async_load()
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     hub.async_add(entry)
     return True
 

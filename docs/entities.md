@@ -22,7 +22,7 @@ link*.
 | Port … speed | link speed in Mbit/s, 0 without link |
 | Port … device | what is connected: see below |
 | Port … PoE | PoE state of the port: searching, delivering power, fault, … (PoE ports only) |
-| Port … received, sent | traffic in bit/s over the last polling interval (off by default) |
+| Port … received, sent | traffic in bit/s over the last polling interval (off by default; needs 64-bit counters) |
 | Port … errors | received and sent errors since the restart (off by default) |
 
 ### Port … device
@@ -40,4 +40,6 @@ IP addresses (if a switch knows them) and whether the device announced itself by
 - The links between your switches show the other switch, not everything behind it, as long as
   all switches are set up.
 
-The list of devices is not recorded in the history, only the state.
+The sensor also carries the port's `port` name and `if_index` (to sort by), `link` (true or false) and `speed` (Mbit/s),
+so a dashboard can show a whole port from this one entity. The device list, link and speed are
+not recorded in this sensor's history (link and speed have their own entities).

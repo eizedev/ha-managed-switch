@@ -231,8 +231,8 @@ wheels = [
 
 [[package]]
 name = "aiosnmpswitch"
-version = "0.1.dev1+g8951fe36c"
-source = { git = "https://github.com/eizedev/aiosnmpswitch?rev=8951fe36cef775bdb434f6bc1c080ab88cd243d2#8951fe36cef775bdb434f6bc1c080ab88cd243d2" }
+version = "0.1.dev3+gaee5c6b13"
+source = { git = "https://github.com/eizedev/aiosnmpswitch?rev=aee5c6b13965188e68d57c8bb97a3e84a27c6428#aee5c6b13965188e68d57c8bb97a3e84a27c6428" }
 dependencies = [
     { name = "cryptography" },
     { name = "pysnmp" },
@@ -1219,7 +1219,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "aiosnmpswitch", git = "https://github.com/eizedev/aiosnmpswitch?rev=8951fe36cef775bdb434f6bc1c080ab88cd243d2" },
+    { name = "aiosnmpswitch", git = "https://github.com/eizedev/aiosnmpswitch?rev=aee5c6b13965188e68d57c8bb97a3e84a27c6428" },
     { name = "mypy", specifier = ">=1.15" },
     { name = "pytest-homeassistant-custom-component", specifier = "==0.13.374" },
     { name = "ruff", specifier = ">=0.11" },

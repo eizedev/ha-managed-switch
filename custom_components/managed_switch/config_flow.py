@@ -9,7 +9,7 @@ from aiosnmpswitch import AuthProtocol, PrivProtocol, SnmpAuthError, SnmpError, 
 from aiosnmpswitch.helpers import is_ethernet_port
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_HOST, CONF_PORT
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -130,9 +130,9 @@ def _credentials(data: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _probe(data: Mapping[str, Any]) -> tuple[str, str | None]:
+async def _probe(hass: HomeAssistant, data: Mapping[str, Any]) -> tuple[str, str | None]:
     """Read the switch once: its MAC address (the unique ID) and its name."""
-    switch = await connect(data)
+    switch = await connect(hass, data)
     try:
         system = await switch.get_system()
         lldp = await switch.get_lldp()
@@ -193,7 +193,7 @@ class SwitchConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 data = {**self._data, **_credentials({**self._data, **user_input})}
-                identity, name = await _probe(data)
+                identity, name = await _probe(self.hass, data)
             except Exception as err:  # the form shows the error; unexpected ones are logged
                 errors["base"] = _error_key(err)
             else:

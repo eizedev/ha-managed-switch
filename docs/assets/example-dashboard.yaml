@@ -1,7 +1,7 @@
 # Example dashboard for the Managed Switch (SNMP) integration.
 # Settings > Dashboards > Add dashboard > New dashboard from scratch, then the three dots >
 # Edit dashboard > three dots > Raw configuration editor, and paste this.
-# It finds every switch and port by itself; nothing to adapt.
+# It finds every switch and port by itself, in any language; nothing to adapt.
 title: Switches
 views:
   - title: Ports
@@ -11,18 +11,19 @@ views:
       - type: markdown
         title: Which device is on which port
         content: |
-          {% set devices = integration_entities('managed_switch')
-             | select('match', 'sensor\..*_device$') | list %}
-          {% for switch in devices | map('device_attr', 'name') | unique | sort %}
-          ### {{ switch }}
+          {% set ports = states.sensor
+             | selectattr('entity_id', 'in', integration_entities('managed_switch'))
+             | selectattr('attributes.device_count', 'defined')
+             | sort(attribute='attributes.if_index') | list %}
+          {% set ns = namespace(switches=[]) %}
+          {% for port in ports %}{% set ns.switches = ns.switches + [device_id(port.entity_id)] %}{% endfor %}
+          {% for switch in ns.switches | unique %}
+          ### {{ device_attr(switch, 'name_by_user') or device_attr(switch, 'name') }}
 
           | Port | Link | Speed | Device |
           | --- | --- | --- | --- |
-          {% for sensor in devices if device_attr(sensor, 'name') == switch -%}
-          {% set base = sensor[:-7] -%}
-          {% set link = states(base | replace('sensor.', 'binary_sensor.') ~ '_link') -%}
-          {% set speed = states(base ~ '_speed') -%}
-          {% set port = state_attr(sensor, 'friendly_name') | replace(switch ~ ' ', '') | regex_replace(' (device|Gerät)$', '') -%}
-          | {{ port }} | {{ '🟢' if link == 'on' else '⚪' }} | {{ speed ~ ' Mbit/s' if speed not in ['0', 'unknown', 'unavailable'] else '' }} | {{ states(sensor) if states(sensor) not in ['unknown', 'unavailable'] else '' }} |
+          {% for port in ports if device_id(port.entity_id) == switch -%}
+          {% set device = port.state if port.state not in ['unknown', 'unavailable'] else '' -%}
+          | {{ port.attributes.port }} | {{ '🟢' if port.attributes.link else '⚪' }} | {{ port.attributes.speed ~ ' Mbit/s' if port.attributes.speed else '' }} | {{ device | regex_replace('[|\\[\\]()<>!`*_\\n]', ' ') | truncate(60) }} |
           {% endfor %}
           {% endfor %}

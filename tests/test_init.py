@@ -78,6 +78,10 @@ async def test_connected_devices(hass: HomeAssistant) -> None:
     assert single.attributes["device_count"] == 1
     mac = single.attributes["devices"][0]["mac"]
     assert single.state == mac
+    assert (single.attributes["port"], single.attributes["if_index"]) == ("2", 2)
+    assert (single.attributes["link"], single.attributes["speed"]) == (True, 100)
+    down = state(hass, "sensor.switch_1_port_4_device")
+    assert (down.attributes["link"], down.attributes["speed"]) == (False, 0)
     # an access point with its Wi-Fi clients
     assert state(hass, "sensor.switch_2_port_4_device").attributes["device_count"] == 9
     assert state(hass, "sensor.switch_2_port_4_device").state.endswith(" +8")
@@ -161,3 +165,49 @@ async def test_device_cannot_be_removed(hass: HomeAssistant) -> None:
     from custom_components.managed_switch import async_remove_config_entry_device  # noqa: PLC0415
 
     assert not await async_remove_config_entry_device(hass, entry, device)
+
+
+async def test_ipv6_host(hass: HomeAssistant) -> None:
+    from .conftest import HOSTS, UNIQUE_IDS  # noqa: PLC0415
+
+    HOSTS["2001:db8::1"] = HOSTS["192.0.2.1"]
+    try:
+        entry = MockConfigEntry(
+            domain="managed_switch",
+            title="switch-1",
+            unique_id=UNIQUE_IDS["192.0.2.1"],
+            data=entry_data("2001:db8::1"),
+        )
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        [device] = dr.async_get(hass).async_get_devices(
+            connections={(dr.CONNECTION_NETWORK_MAC, "02:00:00:00:00:02")}
+        )
+        assert device.configuration_url == "http://[2001:db8::1]/"
+    finally:
+        del HOSTS["2001:db8::1"]
+
+
+async def test_setup_closes_the_switch_on_any_error(hass: HomeAssistant) -> None:
+    from unittest.mock import patch  # noqa: PLC0415
+
+    entry = make_entry("192.0.2.1")
+    entry.add_to_hass(hass)
+    with patch.object(
+        hass.config_entries, "async_forward_entry_setups", side_effect=RuntimeError("boom")
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+    assert transport("192.0.2.1").closed
+
+
+async def test_one_engine_for_all_switches_closed_at_stop(hass: HomeAssistant) -> None:
+    from homeassistant.const import EVENT_HOMEASSISTANT_STOP  # noqa: PLC0415
+
+    await setup(hass, "192.0.2.1", "192.0.2.2")
+    engines = {id(t.options["engine"]) for t in FakeTransport.instances}
+    assert len(engines) == 1
+    engine = FakeTransport.instances[0].options["engine"]
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
+    await hass.async_block_till_done()
+    assert engine.closed

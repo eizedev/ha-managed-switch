@@ -20,6 +20,9 @@
         "description": "The read-only community of {host}. [Help]({docs})",
         "data": {
           "community": "Community"
+        },
+        "data_description": {
+          "community": "The read-only community as set on the switch."
         }
       },
       "usm": {
@@ -34,7 +37,10 @@
         },
         "data_description": {
           "auth_protocol": "Some older switches offer only SHA (SHA-1) or MD5.",
-          "priv_protocol": "Some older switches offer only DES."
+          "priv_protocol": "Some older switches offer only DES.",
+          "user": "The user name on the switch.",
+          "auth_key": "Leave empty when the authentication protocol is \"None\".",
+          "priv_key": "Leave empty when the privacy protocol is \"None\"."
         }
       },
       "reconfigure": {
@@ -44,6 +50,11 @@
           "host": "Host",
           "port": "Port",
           "snmp_version": "SNMP version"
+        },
+        "data_description": {
+          "host": "Address or name of the switch.",
+          "port": "UDP port of the switch's SNMP agent, usually 161.",
+          "snmp_version": "SNMPv1 and v2c send the community in clear text."
         }
       }
     },
@@ -70,6 +81,10 @@
         "data": {
           "fast_interval": "Ports: link, speed and traffic",
           "slow_interval": "Address table, LLDP, PoE and spanning tree"
+        },
+        "data_description": {
+          "fast_interval": "Seconds between two readings of the ports.",
+          "slow_interval": "Seconds between two readings of the tables; switches forget silent devices after about five minutes."
         }
       }
     }

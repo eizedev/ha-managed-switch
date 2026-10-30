@@ -44,6 +44,10 @@ SIGNAL_LOCATIONS = f"{DOMAIN}_locations"
 SIGNAL_NEW_DEVICE = f"{DOMAIN}_new_device"
 STORE_VERSION = 1
 HUB_KEY: HassKey[NetworkHub] = HassKey(DOMAIN)
+# Devices remembered for new_device; the oldest are forgotten beyond this.
+MAX_KNOWN = 5000
+# sysUpTime wraps after 2**32 hundredths of a second (about 497 days).
+_UPTIME_WRAP = timedelta(seconds=2**32 / 100)
 # A counter that goes backwards (wrap, reset, restart) gives no rate for that interval.
 _TICKS_PER_SECOND = 100
 
@@ -190,7 +194,12 @@ class SlowCoordinator(DataUpdateCoordinator[SlowData]):
             boot_time = boot_time.replace(microsecond=0)
             previous = self.data.boot_time if self.data else None
             # sysUpTime is read a moment later each time: keep the boot time unless it moved.
-            if previous and abs((boot_time - previous).total_seconds()) < 60:  # noqa: PLR2004
+            # A jump of about 497 days is sysUpTime wrapping around, not a restart.
+            moved = (boot_time - previous) if previous else None
+            if moved is not None and (
+                abs(moved.total_seconds()) < 60  # noqa: PLR2004
+                or abs((moved - _UPTIME_WRAP).total_seconds()) < 3600  # noqa: PLR2004
+            ):
                 boot_time = previous
         values: dict[str, Any] = {}
         for name, getter in SLOW_READS:
@@ -222,46 +231,58 @@ class NetworkHub:
         self.entries: dict[str, SwitchConfigEntry] = {}
         self.locations: dict[str, MacLocation] = {}
         self._store: Store[dict[str, list[str]]] = Store(hass, STORE_VERSION, f"{DOMAIN}.devices")
-        self._known: set[str] | None = None
+        self._known: dict[str, None] | None = None
+        """Every device located so far, oldest first (a dict keeps the order)."""
+        self._with_fdb: set[str] = set()
+        """Entries whose address table was read with entries at least once."""
 
     async def async_load(self) -> None:
         """Read the remembered devices once."""
         if self._known is None:
             stored = await self._store.async_load()
-            self._known = set(stored["known"]) if stored else set()
+            self._known = dict.fromkeys(stored["known"]) if stored else {}
 
     @callback
     def async_add(self, entry: SwitchConfigEntry) -> None:
         """Include a loaded entry and update the locations whenever its tables change."""
         self.entries[entry.entry_id] = entry
         entry.async_on_unload(entry.runtime_data.slow.async_add_listener(self.async_update))
-        self.async_update()
+        # A switch that joins shows devices that were there all along (before only seen on an
+        # uplink, or on a switch that was not loaded yet): remember them without announcing.
+        self.async_update(announce=False)
 
     @callback
     def async_remove(self, entry: SwitchConfigEntry) -> None:
         """Leave out an unloaded entry."""
         self.entries.pop(entry.entry_id, None)
+        self._with_fdb.discard(entry.entry_id)
         self.async_update()
 
     @callback
-    def async_update(self) -> None:
-        """Locate all devices again and tell the entities."""
+    def async_update(self, announce: bool = True) -> None:
+        """Locate all devices again and tell the entities; announce devices never seen before."""
         switches = {
             entry_id: switch_data(entry)
             for entry_id, entry in self.entries.items()
             if entry.runtime_data.slow.data is not None and entry.runtime_data.fast.data is not None
         }
         self.locations = locate_macs(switches)
-        known = self._known if self._known is not None else set()
-        first_run = not known
+        known = self._known if self._known is not None else {}
         new = [loc for mac, loc in self.locations.items() if mac not in known]
         if new:
-            known.update(loc.address for loc in new)
+            announce = announce and bool(known)  # the very first run only learns
+            for location in new:
+                known[location.address] = None
+            while len(known) > MAX_KNOWN:  # devices with changing random MACs would pile up
+                del known[next(iter(known))]
             # New devices are rare after the first run: save right away, no delayed write.
-            self.hass.async_create_task(self._store.async_save({"known": sorted(known)}))
-            if not first_run:
-                for location in new:
+            self.hass.async_create_task(self._store.async_save({"known": list(known)}))
+            for location in new if announce else ():
+                # A switch whose address table was empty or unreadable until now shows devices
+                # that were there all along.
+                if location.switch in self._with_fdb:
                     async_dispatcher_send(self.hass, SIGNAL_NEW_DEVICE, location)
+        self._with_fdb.update(entry_id for entry_id, data in switches.items() if any(data.fdb))
         self._known = known
         async_dispatcher_send(self.hass, SIGNAL_LOCATIONS)
 

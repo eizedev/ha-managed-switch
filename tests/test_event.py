@@ -85,7 +85,7 @@ async def test_new_device(hass: HomeAssistant) -> None:
     forgotten = sorted(hub.locations)[0]
     location = hub.locations[forgotten]
     assert hub._known is not None
-    hub._known.discard(forgotten)
+    hub._known.pop(forgotten, None)
     hub.async_update()
     await hass.async_block_till_done()
     attributes = last(hass)
@@ -101,7 +101,7 @@ async def test_new_device_on_another_switch(hass: HomeAssistant) -> None:
         mac for mac, loc in hub.locations.items() if loc.switch != hub_entry(hass, "switch-1")
     )
     assert hub._known is not None
-    hub._known.discard(on_3)
+    hub._known.pop(on_3, None)
     hub.async_update()
     await hass.async_block_till_done()
     assert state(hass, EVENT).state == "unknown"  # fired on switch-3, not on switch-1
@@ -112,3 +112,98 @@ def hub_entry(hass: HomeAssistant, title: str) -> str:
     return next(
         e.entry_id for e in hass.config_entries.async_entries("managed_switch") if e.title == title
     )
+
+
+async def test_adding_a_switch_announces_nothing(hass: HomeAssistant) -> None:
+    from .conftest import make_entry as entry_for  # noqa: PLC0415
+
+    await setup(hass, "192.0.2.1")
+    hub = get_hub(hass)
+    assert hub._known is not None
+    hub._known.clear()  # as if switch-1 had never seen any of them,
+    hub._known["02:00:00:00:00:ff"] = None  # after the first run
+    second = entry_for("192.0.2.3")
+    second.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(second.entry_id)
+    await hass.async_block_till_done()
+    # devices that were there all along, newly seen because a switch joined: not announced
+    assert state(hass, "event.switch_3_switch_events").state == "unknown"
+    assert state(hass, EVENT).state == "unknown"
+
+
+async def test_two_uplinks_down_in_one_update_are_both_seen(hass: HomeAssistant) -> None:
+    [entry, _, _] = await setup(hass, "192.0.2.1", "192.0.2.2", "192.0.2.3")
+    seen: list[str] = []
+    hass.bus.async_listen(
+        "state_changed",
+        lambda event: (
+            seen.append(event.data["new_state"].attributes.get("port"))
+            if event.data["entity_id"] == EVENT and event.data["new_state"].state != "unavailable"
+            else None
+        ),
+    )
+    fake = transport("192.0.2.1")
+    fake.set(f"{OPER}.5", 2)
+    fake.set(f"{OPER}.7", 2)
+    await entry.runtime_data.fast.async_refresh()
+    await hass.async_block_till_done()
+    assert seen == ["5", "7"]
+
+
+async def test_uplink_down_after_lldp_forgot_the_neighbour(hass: HomeAssistant) -> None:
+    [entry, _] = await setup(hass, "192.0.2.1", "192.0.2.2")
+    await entry.runtime_data.fast.async_refresh()  # remembers port 7 as an uplink
+    fake = transport("192.0.2.1")
+    for oid in [k for k in fake._values if k.startswith("1.0.8802.1.1.2.1.4.")]:
+        fake._values.pop(oid)  # the neighbour is gone from LLDP first
+    await entry.runtime_data.slow.async_refresh()
+    fake.set(f"{OPER}.7", 2)
+    await entry.runtime_data.fast.async_refresh()
+    await hass.async_block_till_done()
+    assert (last(hass)["event_type"], last(hass)["port"]) == ("uplink_down", "7")
+
+
+async def test_uptime_wrap_is_no_restart(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    [entry] = await setup(hass, "192.0.2.1")
+    slow = entry.runtime_data.slow
+    before = slow.data.boot_time
+    fake = transport("192.0.2.1")
+    uptime = fake._values[UPTIME]
+    assert isinstance(uptime, int)
+    fake.set(UPTIME, uptime - 2**32 + 1000)  # wrapped: ten seconds past the counter's end
+    freezer.tick(timedelta(seconds=10))
+    await slow.async_refresh()
+    await hass.async_block_till_done()
+    assert slow.data.boot_time == before
+    assert state(hass, EVENT).state == "unknown"
+
+
+async def test_a_switch_whose_table_comes_late_announces_nothing(hass: HomeAssistant) -> None:
+    from aiosnmpswitch import SnmpError  # noqa: PLC0415
+
+    from .conftest import FakeTransport  # noqa: PLC0415
+
+    FakeTransport.errors = {"192.0.2.3": {"1.3.6.1.2.1.17.7.1.2.2.1": SnmpError("tooBig")}}
+    entries = await setup(hass, "192.0.2.1", "192.0.2.3")
+    hub = get_hub(hass)
+    assert hub._known is not None
+    for mac, location in list(hub.locations.items()):
+        if location.port_name in ("2", "3", "4"):
+            hub._known.pop(mac, None)
+    hub._known["02:00:00:00:00:ff"] = None
+    FakeTransport.errors = {}
+    await entries[1].runtime_data.slow.async_refresh()
+    await hass.async_block_till_done()
+    assert state(hass, "event.switch_3_switch_events").state == "unknown"
+
+
+async def test_remembered_devices_are_capped(hass: HomeAssistant, monkeypatch: Any) -> None:
+    from custom_components.managed_switch import coordinator  # noqa: PLC0415
+
+    monkeypatch.setattr(coordinator, "MAX_KNOWN", 3)
+    await setup(hass, "192.0.2.1")
+    hub = get_hub(hass)
+    assert hub._known is not None
+    assert len(hub._known) == 3

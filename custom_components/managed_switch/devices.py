@@ -40,7 +40,7 @@ def registry_name(hass: HomeAssistant, mac: str) -> str | None:
         for device in devices
         if not any(domain == DOMAIN for domain, _ in device.identifiers)
     ]
-    # A name someone gave first, then the integrations' names in a fixed order.
+    # Several integrations may know the MAC address: take one name, the same every time.
     return min((n for n in names if n), default=None, key=lambda n: n.casefold())
 
 
