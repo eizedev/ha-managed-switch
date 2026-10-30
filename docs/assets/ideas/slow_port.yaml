@@ -1,0 +1,15 @@
+# A device that should run at 1 Gbit/s has been slower for 10 minutes: a cable or a port that
+# negotiated 100 Mbit/s (here the desktop on switch 3, port 7).
+automation:
+  - alias: Desktop port slow
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.switch_3_port_7_speed
+        below: 1000
+        above: 0
+        for: {minutes: 10}
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: Desktop port slow
+          message: "It runs at {{ trigger.to_state.state }} Mbit/s."

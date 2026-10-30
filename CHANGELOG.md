@@ -10,6 +10,7 @@ All notable changes to this project are documented here. The format follows
 
 - Screenshots in the README and on the website, from a demo instance (`scripts/demo/`) with three
   stand-in switches answering SNMP from the test data.
+- Docs: "Ideas and automations" with six example packages, loaded by the demo on every start.
 - Docs: what the SNMP read access must include, what is lost without each MIB, updating,
   entity IDs in other languages, minimum polling intervals, more troubleshooting.
 

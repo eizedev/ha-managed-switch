@@ -1,0 +1,16 @@
+# Something else is plugged into a port (here the printer port, switch 3, port 8).
+automation:
+  - alias: Printer port changed
+    triggers:
+      - trigger: state
+        entity_id: sensor.switch_3_port_8_device
+        not_from: [unknown, unavailable]
+        not_to: [unavailable]
+    conditions:
+      - condition: template
+        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: Printer port changed
+          message: "Was {{ trigger.from_state.state }}, now {{ trigger.to_state.state or 'nothing' }}."
