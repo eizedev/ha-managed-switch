@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A switch is recognised after LLDP was turned on or off: reauthentication and *Reconfigure* no
+  longer stop with "That is a different switch", and adding it again finds the existing entry
+  ([#12](https://github.com/eizedev/ha-managed-switch/issues/12)).
+- The device sensors look up the connected devices once per update and write only when the
+  devices on their port changed, not on every update of any switch
+  ([#11](https://github.com/eizedev/ha-managed-switch/issues/11)).
+
 ## [0.2.1] - 2026-10-30
 
 ### Fixed

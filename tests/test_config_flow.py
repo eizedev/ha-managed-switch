@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 from aiosnmpswitch import SnmpAuthError, SnmpError, SnmpTimeoutError
@@ -74,17 +76,13 @@ async def _probe_switch(host: str) -> Any:
     return _probe(_hass, entry_data(host))
 
 
-async def test_identity_falls_back_to_the_lowest_port_mac(hass: HomeAssistant) -> None:
-    globals()["_hass"] = hass
-    probe = await _probe_switch("192.0.2.1")
-    original = FakeTransport.walk
+@contextmanager
+def lldp_off() -> Iterator[None]:
+    """Let the stand-in switches answer as if LLDP were turned off."""
+    original_walk, original_get = FakeTransport.walk, FakeTransport.get
 
     async def walk(self: FakeTransport, oid: str) -> Any:
-        if oid.startswith("1.0.8802"):
-            return []
-        return await original(self, oid)
-
-    original_get = FakeTransport.get
+        return [] if oid.startswith("1.0.8802") else await original_walk(self, oid)
 
     async def get(self: FakeTransport, oids: Any) -> Any:
         return await original_get(self, [o for o in oids if not o.startswith("1.0.8802")])
@@ -92,12 +90,49 @@ async def test_identity_falls_back_to_the_lowest_port_mac(hass: HomeAssistant) -
     FakeTransport.walk = walk  # type: ignore[method-assign]
     FakeTransport.get = get  # type: ignore[method-assign]
     try:
-        identity, name = await probe
+        yield
     finally:
-        FakeTransport.walk = original  # type: ignore[method-assign]
+        FakeTransport.walk = original_walk  # type: ignore[method-assign]
         FakeTransport.get = original_get  # type: ignore[method-assign]
+
+
+async def test_identity_falls_back_to_the_lowest_port_mac(hass: HomeAssistant) -> None:
+    globals()["_hass"] = hass
+    with lldp_off():
+        identity, addresses, name = await (await _probe_switch("192.0.2.1"))
     assert identity == "02:00:00:00:00:01"
+    assert "02:00:00:00:00:02" in addresses  # the chassis MAC, which LLDP would report
     assert name == "switch-1"
+
+
+async def test_lldp_turned_off_after_setup(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.1")  # set up with LLDP: the chassis MAC
+    entry.add_to_hass(hass)
+    with lldp_off():
+        result = await entry.start_reconfigure_flow(hass)
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"host": "192.0.2.1", "port": 161, "snmp_version": "2c"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"community": "secret"}
+        )
+        assert result["reason"] == "reconfigure_successful"
+        result = await start(hass, "192.0.2.1", "2c")  # and added again: the same switch
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"community": "secret"}
+        )
+    assert result["reason"] == "already_configured"
+    assert entry.unique_id == "02:00:00:00:00:02"
+
+
+async def test_lldp_turned_on_after_setup(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.1", version="3")
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, unique_id="02:00:00:00:00:01")  # without LLDP
+    result = await entry.start_reauth_flow(hass)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], V3)
+    assert result["reason"] == "reauth_successful"
+    assert entry.unique_id == "02:00:00:00:00:01"
 
 
 async def test_no_identity(hass: HomeAssistant) -> None:
