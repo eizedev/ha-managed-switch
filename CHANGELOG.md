@@ -6,7 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added
+## [0.2.1] - 2026-10-30
+
+### Fixed
 
 - `new_device` tells whether the device is alone on its port (`direct`, `devices_on_port`). The
   blueprint reports only devices plugged in directly unless *Only devices plugged in directly*
@@ -68,7 +70,8 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eizedev/ha-managed-switch/releases/tag/v0.1.0
