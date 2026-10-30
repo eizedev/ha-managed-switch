@@ -34,8 +34,8 @@ only: it never changes a setting.
   registry), PoE status, and on request received and sent traffic and errors.
 - One events entity per switch with a ready blueprint for notifications.
 - SNMPv3 (recommended) or v2c, standard MIBs, plus the HPE 1930's own sensor table:
-  vendor-neutral. Tested on HPE OfficeConnect
-  1920S and HPE Instant On 1930; other managed switches with SNMP are expected to work.
+  vendor-neutral. Tested on HPE OfficeConnect 1920S and HPE Instant On 1930; other managed
+  switches with SNMP are expected to work.
 
 ## Install
 
