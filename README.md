@@ -21,6 +21,11 @@ only: it never changes a setting.
 
 **Documentation: [ha-managed-switch.eize.dev](https://ha-managed-switch.eize.dev/)**
 
+<p>
+  <img src="https://raw.githubusercontent.com/eizedev/ha-managed-switch/main/docs/assets/screenshots/dashboard.png" alt="The example dashboard: every port of three switches with link, speed and the device connected to it" width="49%">
+  <img src="https://raw.githubusercontent.com/eizedev/ha-managed-switch/main/docs/assets/screenshots/device-switch.png" alt="A switch's device page with PoE, port devices, links and speeds" width="49%">
+</p>
+
 ## What you get
 
 - One device per switch: last restart, PoE budget and consumption, spanning tree changes.

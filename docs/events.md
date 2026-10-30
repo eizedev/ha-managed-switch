@@ -40,3 +40,7 @@ actions:
     data:
       message: "Port {{ trigger.to_state.attributes.port }} lost its link"
 ```
+
+The entity ID follows the language Home Assistant used when the entity was created: in a German
+installation it is `event.switch_1_switch_ereignisse`. Copy it from the entity's settings, or use
+the blueprint, which needs no ID.

@@ -28,6 +28,18 @@ hide:
 
 </div>
 
+![The example dashboard: every port of three switches with link, speed and the device connected to it](assets/screenshots/dashboard.png)
+
+## Before you start
+
+- Home Assistant 2026.10.3 or newer.
+- Read-only SNMP access on every switch (SNMPv3 recommended, v2c works): [SNMP access](configuration.md#snmp-access).
+- LLDP on on every switch, and all switches added, so the links between them are recognised.
+- Tested on HPE OfficeConnect 1920S and HPE Instant On 1930; other managed switches with the
+  standard MIBs are expected to work. Reports are welcome in the
+  [issues](https://github.com/eizedev/ha-managed-switch/issues) and
+  [discussions](https://github.com/eizedev/ha-managed-switch/discussions).
+
 ## How it finds where a device is
 
 Every switch learns the MAC addresses on its ports. The integration reads the address tables of

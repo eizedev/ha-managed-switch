@@ -16,6 +16,13 @@ behind an access point or an unmanaged switch share that port.
 **A device is missing.** Switches forget silent devices after a few minutes. It appears again
 once it sends something.
 
+**Entities are unavailable.** The switch did not answer the last reading (see the first entry),
+or a port no longer exists on it. Entities of a port that is gone for good can be removed on the
+entity's page.
+
+**Received, sent and errors are missing.** They are off by default: Settings, Devices & services,
+Managed Switch (SNMP), the switch, then the entities not shown, and enable the ones you want.
+
 **Received and sent stay unknown.** They need the 64-bit counters (`ifXTable`), which SNMPv1
 and some small switches do not offer.
 
