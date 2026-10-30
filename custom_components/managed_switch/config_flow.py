@@ -132,7 +132,7 @@ def _credentials(data: Mapping[str, Any]) -> dict[str, Any]:
 
 async def _probe(hass: HomeAssistant, data: Mapping[str, Any]) -> tuple[str, str | None]:
     """Read the switch once: its MAC address (the unique ID) and its name."""
-    switch = await connect(hass, data)
+    switch = await connect(hass, data, shared=False)
     try:
         system = await switch.get_system()
         lldp = await switch.get_lldp()

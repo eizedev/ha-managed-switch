@@ -276,3 +276,14 @@ async def test_ports_and_poe_ports_that_appear_later_get_entities(hass: HomeAssi
     await hass.async_block_till_done()
     assert state(hass, "binary_sensor.switch_1_port_9_link").state == "on"
     assert hass.states.get("sensor.switch_1_port_9_speed") is not None
+
+
+async def test_snmpv3_users_with_different_passwords_get_their_own_engine(
+    hass: HomeAssistant,
+) -> None:
+    from custom_components.managed_switch import get_engine  # noqa: PLC0415
+
+    same = await get_engine(hass, UsmAuth("monitor", "a1", "p1"))
+    assert await get_engine(hass, UsmAuth("monitor", "a1", "p1")) is same
+    assert await get_engine(hass, UsmAuth("monitor", "a2", "p1")) is not same
+    assert await get_engine(hass, CommunityAuth("x")) is await get_engine(hass, CommunityAuth("y"))

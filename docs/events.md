@@ -10,8 +10,8 @@ attribute `event_type` says which:
 | `restarted` | the switch booted since the last reading | `boot_time` |
 | `new_device` | a device is seen for the first time on any of your switches | `port`, `if_index`, `mac`, `name`, `ip_addresses` |
 
-Nothing fires for the state at startup. New devices are remembered across restarts (the last
-5000); on the very first run, and for a switch that is added or whose address table is read for
+Nothing fires for the state at startup. New devices are remembered across restarts (the 5000
+seen most recently); on the very first run, and for a switch that is added or whose address table is read for
 the first time, all devices are taken as known. Phones and laptops that use a new random MAC
 address for a network now and then appear as new each time. The event's attributes, including
 MAC and IP addresses, are kept in Home Assistant's history like any other state.

@@ -19,6 +19,12 @@ All notable changes to this project are documented here. The format follows
 
 - Ports, trunks and PoE ports that appear after setup get their entities without reloading.
 - Example dashboard: names keep their brackets and other characters (escaped instead of removed).
+- Switches with SNMPv3 users of the same name but different passwords no longer share an SNMP
+  engine, where they could replace each other's keys; the setup dialog's test uses an engine of
+  its own.
+- A device seen again counts as recent for the remembered devices, so a device that is always
+  there is not announced as new after 5000 others; a second sysUpTime wrap is no restart either.
+- Deprecated `DeviceEntry.config_entries` no longer used.
 
 ## [0.1.0] - 2026-10-30
 
