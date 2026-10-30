@@ -24,6 +24,7 @@ hide:
 - [**Entities**](entities.md)<br>Switch and port sensors, what each means.
 - [**Events**](events.md)<br>Uplink down, slower port, restart, new device, with a blueprint.
 - [**Dashboard**](dashboard.md)<br>A port overview of all switches to paste.
+- [**Ideas and automations**](ideas.md)<br>Link lost, slow port, PoE, busy port: examples to copy.
 - [**Troubleshooting**](troubleshooting.md)<br>Timeouts, rejected users, missing ports.
 
 </div>

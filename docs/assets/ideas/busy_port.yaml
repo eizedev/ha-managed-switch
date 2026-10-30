@@ -1,0 +1,14 @@
+# A port is busy for 15 minutes, for example a backup running in the day (here the server's
+# trunk; enable its "received" sensor first, it is off by default).
+automation:
+  - alias: Server port busy
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.switch_1_port_trk_2_received
+        above: 500
+        for: {minutes: 15}
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: Server port busy
+          message: "{{ trigger.to_state.state | round(0) }} Mbit/s for 15 minutes."

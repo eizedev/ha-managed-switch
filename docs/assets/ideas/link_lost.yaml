@@ -1,0 +1,13 @@
+# A wired device lost its link for 5 minutes: its port's link sensor (here the NAS on trunk 1).
+automation:
+  - alias: NAS link lost
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.switch_1_port_trk_1_link
+        to: "off"
+        for: {minutes: 5}
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: NAS offline
+          message: "Its port has had no link since {{ trigger.from_state.last_changed | as_local }}."

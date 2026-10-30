@@ -1,0 +1,13 @@
+# A PoE device no longer gets power (here whatever is plugged into switch 1, port 1).
+automation:
+  - alias: PoE device without power
+    triggers:
+      - trigger: state
+        entity_id: sensor.switch_1_port_1_poe
+        from: delivering_power
+        for: {minutes: 2}
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: PoE device without power
+          message: "Port 1 PoE is now {{ trigger.to_state.state }}."

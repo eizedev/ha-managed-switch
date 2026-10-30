@@ -1,0 +1,14 @@
+# A switch does not answer for 10 minutes: its entities become unavailable (here switch 2,
+# watched through its uplink port).
+automation:
+  - alias: Switch unreachable
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.switch_2_port_7_link
+        to: unavailable
+        for: {minutes: 10}
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          title: Switch 2 unreachable
+          message: "It has not answered SNMP since {{ trigger.from_state.last_changed | as_local }}."

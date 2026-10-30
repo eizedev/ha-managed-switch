@@ -41,6 +41,8 @@ homeassistant:
   time_zone: Europe/Berlin
   currency: EUR
   country: DE
+  # The examples of the "Ideas and automations" page, so every demo start checks them.
+  packages: !include_dir_named ideas
 demo_devices:
 frontend:
 config:
@@ -120,6 +122,9 @@ async def main(args: argparse.Namespace) -> None:
     (CONFIG / "custom_components").mkdir(parents=True, exist_ok=True)
     link("managed_switch", REPO / "custom_components" / "managed_switch")
     link("demo_devices", HERE / "demo_devices")
+    ideas = CONFIG / "ideas"
+    if not ideas.exists():
+        ideas.symlink_to(REPO / "docs" / "assets" / "ideas")
     (CONFIG / "configuration.yaml").write_text(CONFIGURATION.format(port=args.port))
 
     switches = await asyncio.create_subprocess_exec(

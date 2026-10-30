@@ -13,6 +13,7 @@ nav = [
   { "Configuration" = "configuration.md" },
   { "Entities" = "entities.md" },
   { "Events" = "events.md" },
+  { "Ideas and automations" = "ideas.md" },
   { "Dashboard" = "dashboard.md" },
   { "Troubleshooting" = "troubleshooting.md" },
 ]
@@ -56,3 +57,4 @@ toc.permalink = true
 pymdownx.highlight = {}
 pymdownx.superfences = {}
 pymdownx.inlinehilite = {}
+pymdownx.snippets = { check_paths = true }
