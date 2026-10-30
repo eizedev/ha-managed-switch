@@ -16,7 +16,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfPower
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -29,7 +29,7 @@ from .coordinator import (
     SlowData,
     SwitchConfigEntry,
 )
-from .devices import connected, summary
+from .devices import Connected, connected, summary
 from .entity import PortEntity, SwitchEntity, async_add_per_port
 
 PARALLEL_UPDATES = 0
@@ -218,23 +218,40 @@ class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
             SensorEntityDescription(key="device", translation_key="device"),
             interface,
         )
+        self._devices: list[Connected] = []
+        """The devices on the port, worked out once per write (registry lookups per MAC)."""
 
     async def async_added_to_hass(self) -> None:
         """Update when the devices are located again."""
         await super().async_added_to_hass()
+        self._devices = connected(self.hass, self.entry, self.if_index)
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, SIGNAL_LOCATIONS, self.async_write_ha_state)
+            async_dispatcher_connect(self.hass, SIGNAL_LOCATIONS, self._locations_changed)
         )
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Write link and speed; look the devices up again, their names may have changed."""
+        self._devices = connected(self.hass, self.entry, self.if_index)
+        super()._handle_coordinator_update()
+
+    @callback
+    def _locations_changed(self) -> None:
+        """Write only when the devices on this port changed: every switch's update signals."""
+        devices = connected(self.hass, self.entry, self.if_index)
+        if devices != self._devices:
+            self._devices = devices
+            self.async_write_ha_state()
 
     @property
     def native_value(self) -> str | None:
         """The first device's name, with the number of others."""
-        return summary(connected(self.hass, self.entry, self.if_index))
+        return summary(self._devices)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """All devices on the port, with MAC and IP addresses; the port's name, link and speed."""
-        devices = connected(self.hass, self.entry, self.if_index)
+        devices = self._devices
         interface = self.interface
         assert interface is not None  # noqa: S101 - unavailable otherwise, attributes not read
         return {

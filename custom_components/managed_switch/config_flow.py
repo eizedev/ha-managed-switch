@@ -7,7 +7,12 @@ from typing import Any
 
 from aiosnmpswitch import AuthProtocol, PrivProtocol, SnmpAuthError, SnmpError, SnmpTimeoutError
 from aiosnmpswitch.helpers import is_ethernet_port
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlowWithReload,
+)
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
@@ -130,8 +135,13 @@ def _credentials(data: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _probe(hass: HomeAssistant, data: Mapping[str, Any]) -> tuple[str, str | None]:
-    """Read the switch once: its MAC address (the unique ID) and its name."""
+async def _probe(hass: HomeAssistant, data: Mapping[str, Any]) -> tuple[str, set[str], str | None]:
+    """Read the switch once: its MAC address (the unique ID), all its own addresses, its name.
+
+    The unique ID is the LLDP chassis MAC, or without LLDP the lowest port MAC; on many switches
+    these differ (the chassis MAC belongs to the management interface). Both are among the
+    switch's own addresses, which is how a switch is recognised when LLDP was turned on or off.
+    """
     switch = await connect(hass, data, shared=False)
     try:
         system = await switch.get_system()
@@ -147,7 +157,8 @@ async def _probe(hass: HomeAssistant, data: Mapping[str, Any]) -> tuple[str, str
         identity = min(macs) if macs else None
     if identity is None:
         raise NoIdentityError
-    return identity, system.name
+    addresses = {i.phys_address for i in interfaces.values() if i.phys_address} | {identity}
+    return identity, addresses, system.name
 
 
 class SwitchConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -193,11 +204,11 @@ class SwitchConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 data = {**self._data, **_credentials({**self._data, **user_input})}
-                identity, name = await _probe(self.hass, data)
+                identity, addresses, name = await _probe(self.hass, data)
             except Exception as err:  # the form shows the error; unexpected ones are logged
                 errors["base"] = _error_key(err)
             else:
-                return await self._finish(data, identity, name)
+                return await self._finish(data, identity, addresses, name)
         schema = USM_SCHEMA if step == "usm" else COMMUNITY_SCHEMA
         return self.async_show_form(
             step_id=step,
@@ -207,9 +218,21 @@ class SwitchConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def _finish(
-        self, data: dict[str, Any], identity: str, name: str | None
+        self, data: dict[str, Any], identity: str, addresses: set[str], name: str | None
     ) -> ConfigFlowResult:
-        await self.async_set_unique_id(identity)
+        # An entry whose ID is one of the switch's own addresses is this switch, under the other
+        # identity (LLDP turned on or off since it was set up): keep that entry's ID.
+        entry: ConfigEntry | None
+        if self.source == "reauth":
+            entry = self._get_reauth_entry()
+        elif self.source == "reconfigure":
+            entry = self._get_reconfigure_entry()
+        else:
+            entry = next(
+                (e for e in self._async_current_entries() if e.unique_id in addresses), None
+            )
+        known = entry.unique_id if entry is not None and entry.unique_id in addresses else None
+        await self.async_set_unique_id(known or identity)
         if self.source == "reauth":
             self._abort_if_unique_id_mismatch(reason="wrong_switch")
             return self.async_update_reload_and_abort(self._get_reauth_entry(), data=data)

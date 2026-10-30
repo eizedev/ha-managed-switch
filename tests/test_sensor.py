@@ -5,8 +5,9 @@ from __future__ import annotations
 from aiosnmpswitch import Interface, Lldp, LldpRemote, Poe, PsePort, SystemInfo
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from custom_components.managed_switch.coordinator import get_hub
+from custom_components.managed_switch.coordinator import SIGNAL_LOCATIONS, get_hub
 from custom_components.managed_switch.devices import Connected, connected, summary
 from custom_components.managed_switch.entity import firmware, model, vendor
 
@@ -112,3 +113,24 @@ async def test_unload_that_fails_keeps_the_switch(hass: HomeAssistant) -> None:
     with patch.object(hass.config_entries, "async_unload_platforms", return_value=False):
         assert not await hass.config_entries.async_unload(entry.entry_id)  # type: ignore[attr-defined]
     assert not transport("192.0.2.1").closed
+
+
+async def test_device_sensor_writes_only_when_its_devices_change(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.1")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    sensor = "sensor.switch_1_port_1_device"
+    before = state(hass, sensor)
+    hub = get_hub(hass)
+    hub.async_update()  # located again, nothing moved: no write
+    await hass.async_block_till_done()
+    assert state(hass, sensor).last_reported == before.last_reported
+    mac = next(m for m, loc in hub.locations.items() if loc.if_index == 1)
+    del hub.locations[mac]  # as if the device had moved away
+    hub.locations = dict(hub.locations)
+    async_dispatcher_send(hass, SIGNAL_LOCATIONS)
+    await hass.async_block_till_done()
+    after = state(hass, sensor)
+    assert after.last_reported != before.last_reported
+    assert after.attributes["device_count"] == before.attributes["device_count"] - 1

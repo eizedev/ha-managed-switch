@@ -50,13 +50,11 @@ switch and everything behind it look like devices on that port, and `uplink_down
 | User, protocols, passwords | SNMPv3 only; must match the user on the switch |
 
 The switch is identified by its MAC address (the LLDP chassis ID, or the lowest port MAC address
-when LLDP is off).
+when LLDP is off). Turning LLDP on or off later changes that address on many switches; the
+integration still recognises the switch, because both belong to it.
 
 - **New IP address or other credentials:** *Reconfigure* (the three dots of the entry); the
   entities stay.
-- **LLDP turned on or off after setup:** the switch may report a different MAC address.
-  *Reconfigure* then stops with "That is a different switch"; remove the entry and add the switch
-  again.
 
 A port, trunk or PoE port that appears later (a new trunk, PoE read only after a failed first try)
 gets its entities with the next reading. Entities of a port that disappears stay, unavailable;
