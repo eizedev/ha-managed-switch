@@ -6,8 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
 ### Added
 
+- WebSocket command `managed_switch/ports`: a switch's ports with their kind (port or trunk), trunk
+  members, uplinks, PoE and the entity of each role, for the
+  [switch card](https://github.com/eizedev/managed-switch-card).
+- Docs: the switch card; the demo photographs it (`screenshots.py --card`).
 - Screenshots in the README and on the website, from a demo instance (`scripts/demo/`) with three
   stand-in switches answering SNMP from the test data.
 - Docs: "Ideas and automations" with six example packages, loaded by the demo on every start.
@@ -53,6 +59,7 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eizedev/ha-managed-switch/releases/tag/v0.1.0

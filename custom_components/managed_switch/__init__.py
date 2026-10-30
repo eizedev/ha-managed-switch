@@ -20,9 +20,11 @@ from aiosnmpswitch import (
 from homeassistant.const import CONF_HOST, CONF_PORT, EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr
 from homeassistant.helpers.singleton import singleton
+from homeassistant.helpers.typing import ConfigType
 
+from . import websocket
 from .const import (
     CONF_AUTH_KEY,
     CONF_AUTH_PROTOCOL,
@@ -46,6 +48,13 @@ from .coordinator import (
 )
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.EVENT, Platform.SENSOR]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the WebSocket command the switch card uses."""
+    websocket.async_setup(hass)
+    return True
 
 
 def auth_from(data: Mapping[str, Any]) -> CommunityAuth | UsmAuth:

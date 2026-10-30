@@ -9,5 +9,4 @@ device. It finds the switches by itself; nothing to adapt.
 
 ![The example dashboard with three switches](assets/screenshots/dashboard.png)
 
-A card that shows a switch like its own web interface (a front panel with coloured ports) is
-planned: [roadmap](https://github.com/eizedev/ha-managed-switch/issues?q=is%3Aissue+is%3Aopen+label%3Aroadmap).
+For a switch's front panel with coloured ports, use the [switch card](card.md).

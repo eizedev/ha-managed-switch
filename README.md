@@ -54,6 +54,7 @@ Then add the integration once per switch. Requires Home Assistant 2026.10.3 or n
 - [Entities](https://ha-managed-switch.eize.dev/entities/) and [Events](https://ha-managed-switch.eize.dev/events/): what each one means, the blueprint
 - [Dashboard](https://ha-managed-switch.eize.dev/dashboard/): a port overview to paste
 - [Ideas and automations](https://ha-managed-switch.eize.dev/ideas/): link lost, slow port, PoE, busy port
+- [Switch card](https://ha-managed-switch.eize.dev/card/): a switch's front panel ([managed-switch-card](https://github.com/eizedev/managed-switch-card))
 - [Troubleshooting](https://ha-managed-switch.eize.dev/troubleshooting/)
 
 The SNMP part is the library [aiosnmpswitch](https://aiosnmpswitch.eize.dev/).
@@ -61,7 +62,7 @@ The SNMP part is the library [aiosnmpswitch](https://aiosnmpswitch.eize.dev/).
 ## Roadmap
 
 Planned work is in the [roadmap issues](https://github.com/eizedev/ha-managed-switch/issues?q=is%3Aissue+is%3Aopen+label%3Aroadmap):
-a card that shows a switch like its own web interface, PoE power per port, temperatures.
+PoE power per port, temperatures.
 
 ## Contributing
 

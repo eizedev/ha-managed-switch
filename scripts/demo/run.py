@@ -120,6 +120,9 @@ async def main(args: argparse.Namespace) -> None:
         shutil.rmtree(CONFIG)
     first_run = not CONFIG.exists()
     (CONFIG / "custom_components").mkdir(parents=True, exist_ok=True)
+    (CONFIG / "www").mkdir(
+        exist_ok=True
+    )  # /local/ (the switch card) exists only if it does at start
     link("managed_switch", REPO / "custom_components" / "managed_switch")
     link("demo_devices", HERE / "demo_devices")
     ideas = CONFIG / "ideas"

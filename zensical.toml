@@ -15,6 +15,7 @@ nav = [
   { "Events" = "events.md" },
   { "Ideas and automations" = "ideas.md" },
   { "Dashboard" = "dashboard.md" },
+  { "Switch card" = "card.md" },
   { "Troubleshooting" = "troubleshooting.md" },
 ]
 

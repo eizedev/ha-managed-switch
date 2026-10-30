@@ -79,8 +79,9 @@ async def main(args: argparse.Namespace) -> None:
             locale="en-US",
         )
         page = await context.new_page()
+        page.on("console", lambda m: print("console:", m.text) if m.type == "error" else None)
         try:
-            await tour(page)
+            await tour(page, args.card)
         except Exception:
             await page.screenshot(path=OUT / "failed.png")  # where it stopped; not committed
             raise
@@ -88,7 +89,7 @@ async def main(args: argparse.Namespace) -> None:
             await browser.close()
 
 
-async def tour(page: Page) -> None:
+async def tour(page: Page, card_bundle: Path | None) -> None:
     """Photograph the documented pages."""
     await login(page)
     await setup_dialog(page)
@@ -112,9 +113,53 @@ async def tour(page: Page) -> None:
     await page.goto(f"{BASE}/switch-ports/ports")
     await shoot(page, "dashboard")
 
+    if card_bundle is not None:
+        await card(page, card_bundle)
+
+
+async def card(page: Page, bundle: Path) -> None:
+    """Load the switch card (a build of managed-switch-card) and photograph it for each switch."""
+    target = HERE / ".config" / "www" / "managed-switch-card.js"  # run.py creates www/
+    await asyncio.to_thread(target.write_bytes, await asyncio.to_thread(bundle.read_bytes))
+    devices = await page.evaluate(
+        f"""async () => ['switch_1', 'switch_2', 'switch_3'].map(
+            (s) => {HASS}.entities[`event.${{s}}_switch_events`]?.device_id)"""
+    )
+    config = {
+        "views": [
+            {
+                "title": "Card",
+                "path": "card",
+                "type": "masonry",
+                "cards": [
+                    {"type": "custom:managed-switch-card", "device_id": d, "show_rates": False}
+                    for d in devices
+                ],
+            }
+        ]
+    }
+    await page.evaluate(
+        f"""async (config) => {{
+            await {HASS}.callWS({{type: 'lovelace/resources/create', res_type: 'module',
+                url: '/local/managed-switch-card.js?v=' + Date.now()}});
+            await {HASS}.callWS({{type: 'lovelace/dashboards/create', url_path: 'switch-card',
+                title: 'Switch card', icon: 'mdi:switch', mode: 'storage', require_admin: false,
+                show_in_sidebar: true}});
+            await {HASS}.callWS({{type: 'lovelace/config/save', url_path: 'switch-card', config}});
+        }}""",
+        config,
+    )
+    await page.set_viewport_size({"width": 1280, "height": 1000})
+    await page.goto(f"{BASE}/switch-card/card")
+    await page.reload()
+    await shoot(page, "card")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else None)
     parser.add_argument("--browser", default="msedge", choices=["msedge", "chrome", "chromium"])
     parser.add_argument("--scheme", default="light", choices=["dark", "light"])
+    parser.add_argument(
+        "--card", type=Path, help="a build of managed-switch-card to photograph as well"
+    )
     asyncio.run(main(parser.parse_args()))
