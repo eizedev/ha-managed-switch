@@ -1,0 +1,13 @@
+{
+  "domain": "managed_switch",
+  "name": "Managed Switch (SNMP)",
+  "codeowners": ["@eizedev"],
+  "config_flow": true,
+  "documentation": "https://ha-managed-switch.eize.dev/",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/eizedev/ha-managed-switch/issues",
+  "loggers": ["aiosnmpswitch", "pysnmp"],
+  "requirements": ["aiosnmpswitch==0.1.0"],
+  "version": "0.1.0"
+}

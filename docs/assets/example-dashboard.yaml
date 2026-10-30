@@ -1,0 +1,28 @@
+# Example dashboard for the Managed Switch (SNMP) integration.
+# Settings > Dashboards > Add dashboard > New dashboard from scratch, then the three dots >
+# Edit dashboard > three dots > Raw configuration editor, and paste this.
+# It finds every switch and port by itself; nothing to adapt.
+title: Switches
+views:
+  - title: Ports
+    path: ports
+    icon: mdi:switch
+    cards:
+      - type: markdown
+        title: Which device is on which port
+        content: |
+          {% set devices = integration_entities('managed_switch')
+             | select('match', 'sensor\..*_device$') | list %}
+          {% for switch in devices | map('device_attr', 'name') | unique | sort %}
+          ### {{ switch }}
+
+          | Port | Link | Speed | Device |
+          | --- | --- | --- | --- |
+          {% for sensor in devices if device_attr(sensor, 'name') == switch -%}
+          {% set base = sensor[:-7] -%}
+          {% set link = states(base | replace('sensor.', 'binary_sensor.') ~ '_link') -%}
+          {% set speed = states(base ~ '_speed') -%}
+          {% set port = state_attr(sensor, 'friendly_name') | replace(switch ~ ' ', '') | regex_replace(' (device|Gerät)$', '') -%}
+          | {{ port }} | {{ '🟢' if link == 'on' else '⚪' }} | {{ speed ~ ' Mbit/s' if speed not in ['0', 'unknown', 'unavailable'] else '' }} | {{ states(sensor) if states(sensor) not in ['unknown', 'unavailable'] else '' }} |
+          {% endfor %}
+          {% endfor %}

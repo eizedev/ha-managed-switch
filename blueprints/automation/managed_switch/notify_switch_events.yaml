@@ -1,0 +1,70 @@
+blueprint:
+  name: Managed switch events
+  description: >-
+    Send a notification when an uplink or trunk of a managed switch loses its link, a port
+    comes back slower than before, the switch restarts, or a device is seen for the first time.
+    Uses the "Switch events" entity of the Managed Switch (SNMP) integration.
+  domain: automation
+  source_url: https://github.com/eizedev/ha-managed-switch/blob/main/blueprints/automation/managed_switch/notify_switch_events.yaml
+  input:
+    events_entity:
+      name: Switch events
+      description: The "Switch events" entity of a switch.
+      selector:
+        entity:
+          filter:
+            - integration: managed_switch
+              domain: event
+    event_types:
+      name: Events
+      default: [uplink_down, speed_dropped, restarted, new_device]
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: Uplink or trunk lost its link
+              value: uplink_down
+            - label: Port slower than before
+              value: speed_dropped
+            - label: Switch restarted
+              value: restarted
+            - label: New device
+              value: new_device
+    notify_action:
+      name: Notification
+      description: What to do, for example a notification to your phone.
+      default:
+        - action: persistent_notification.create
+          data:
+            title: "{{ title }}"
+            message: "{{ message }}"
+      selector:
+        action: {}
+
+mode: queued
+
+triggers:
+  - trigger: state
+    entity_id: !input events_entity
+    not_from: unavailable
+    not_to: unavailable
+
+variables:
+  event_types: !input event_types
+  event_type: "{{ trigger.to_state.attributes.event_type }}"
+  switch: "{{ device_attr(device_id(trigger.entity_id), 'name') or trigger.entity_id }}"
+  port: "{{ trigger.to_state.attributes.port | default('') }}"
+  title: "{{ switch }}"
+  message: >-
+    {% set a = trigger.to_state.attributes %}
+    {% if event_type == 'uplink_down' %}Port {{ port }} (uplink or trunk) lost its link.
+    {% elif event_type == 'speed_dropped' %}Port {{ port }} runs at {{ a.speed }} Mbit/s instead of {{ a.previous }} Mbit/s.
+    {% elif event_type == 'restarted' %}The switch restarted.
+    {% elif event_type == 'new_device' %}New device {{ a.name or a.mac }} on port {{ port }}.
+    {% endif %}
+
+conditions:
+  - condition: template
+    value_template: "{{ event_type in event_types }}"
+
+actions: !input notify_action

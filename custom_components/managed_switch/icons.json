@@ -1,0 +1,54 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "link": {
+        "default": "mdi:ethernet",
+        "state": {
+          "off": "mdi:ethernet-off"
+        }
+      }
+    },
+    "event": {
+      "port_event": {
+        "default": "mdi:switch"
+      }
+    },
+    "sensor": {
+      "boot_time": {
+        "default": "mdi:restart"
+      },
+      "poe_consumption": {
+        "default": "mdi:flash"
+      },
+      "poe_budget": {
+        "default": "mdi:flash-outline"
+      },
+      "topology_changes": {
+        "default": "mdi:graph-outline"
+      },
+      "speed": {
+        "default": "mdi:speedometer"
+      },
+      "received": {
+        "default": "mdi:download-network"
+      },
+      "sent": {
+        "default": "mdi:upload-network"
+      },
+      "errors": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "device": {
+        "default": "mdi:lan-connect"
+      },
+      "poe": {
+        "default": "mdi:power-plug-outline",
+        "state": {
+          "delivering_power": "mdi:power-plug",
+          "fault": "mdi:power-plug-off",
+          "other_fault": "mdi:power-plug-off"
+        }
+      }
+    }
+  }
+}

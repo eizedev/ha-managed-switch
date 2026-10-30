@@ -1,0 +1,183 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Managed Switch hinzufügen",
+        "description": "Der Switch wird per SNMP gelesen und nie verändert. SNMPv3 ist empfohlen: Es prüft jede Anfrage und verschlüsselt die Antworten. [Hilfe]({docs})",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "snmp_version": "SNMP-Version"
+        },
+        "data_description": {
+          "host": "Adresse oder Name des Switches.",
+          "port": "UDP-Port des SNMP-Agents, meist 161.",
+          "snmp_version": "SNMPv1 und v2c senden die Community im Klartext."
+        }
+      },
+      "community": {
+        "title": "SNMP-Community",
+        "description": "Die Community von {host} mit Lesezugriff. [Hilfe]({docs})",
+        "data": {
+          "community": "Community"
+        }
+      },
+      "usm": {
+        "title": "SNMPv3-Benutzer",
+        "description": "Ein SNMPv3-Benutzer von {host} mit Lesezugriff, mit den Protokollen, die auf dem Switch für ihn eingestellt sind. [Hilfe]({docs})",
+        "data": {
+          "user": "Benutzer",
+          "auth_protocol": "Authentifizierungsprotokoll",
+          "auth_key": "Authentifizierungspasswort",
+          "priv_protocol": "Verschlüsselungsprotokoll",
+          "priv_key": "Verschlüsselungspasswort"
+        },
+        "data_description": {
+          "auth_protocol": "Manche ältere Switches bieten nur SHA (SHA-1) oder MD5.",
+          "priv_protocol": "Manche ältere Switches bieten nur DES."
+        }
+      },
+      "reconfigure": {
+        "title": "Verbindung ändern",
+        "description": "Im nächsten Schritt werden die Zugangsdaten noch einmal abgefragt. [Hilfe]({docs})",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "snmp_version": "SNMP-Version"
+        }
+      }
+    },
+    "error": {
+      "timeout": "Der Switch hat nicht geantwortet. Prüfe die Adresse, ob SNMP an ist, und die Community (bei falscher Community schweigen Switches).",
+      "invalid_auth": "Der Switch hat den SNMPv3-Benutzer, seine Passwörter oder Protokolle abgelehnt.",
+      "key_missing": "Gib für jedes Protokoll außer „Keins“ ein Passwort ein, und nutze Verschlüsselung nur mit Authentifizierung.",
+      "no_identity": "Der Switch meldet keine MAC-Adresse und lässt sich deshalb nicht von anderen unterscheiden.",
+      "cannot_connect": "Der Switch hat mit einem Fehler geantwortet.",
+      "unknown": "Unerwarteter Fehler, siehe Protokoll."
+    },
+    "abort": {
+      "already_configured": "Dieser Switch ist schon eingerichtet.",
+      "reauth_successful": "Die neuen Zugangsdaten funktionieren.",
+      "reconfigure_successful": "Die Verbindung wurde geändert.",
+      "wrong_switch": "Das ist ein anderer Switch als der eingerichtete."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Abfrage",
+        "description": "Wie oft der Switch gelesen wird. [Hilfe]({docs})",
+        "data": {
+          "fast_interval": "Ports: Link, Geschwindigkeit und Datenrate",
+          "slow_interval": "Adresstabelle, LLDP, PoE und Spanning Tree"
+        }
+      }
+    }
+  },
+  "selector": {
+    "snmp_version": {
+      "options": {
+        "3": "SNMPv3 (empfohlen)",
+        "2c": "SNMPv2c",
+        "1": "SNMPv1"
+      }
+    },
+    "auth_protocol": {
+      "options": {
+        "none": "Keins",
+        "md5": "MD5",
+        "sha": "SHA (SHA-1)",
+        "sha224": "SHA-224",
+        "sha256": "SHA-256",
+        "sha384": "SHA-384",
+        "sha512": "SHA-512"
+      }
+    },
+    "priv_protocol": {
+      "options": {
+        "none": "Keins",
+        "des": "DES",
+        "3des": "3DES",
+        "aes128": "AES-128",
+        "aes192": "AES-192",
+        "aes256": "AES-256"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "link": {
+        "name": "Port {port} Link"
+      }
+    },
+    "event": {
+      "port_event": {
+        "name": "Switch-Ereignisse",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "uplink_down": "Uplink oder Trunk ohne Link",
+              "speed_dropped": "Port langsamer als vorher",
+              "restarted": "Switch neu gestartet",
+              "new_device": "Neues Gerät"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "boot_time": {
+        "name": "Letzter Neustart"
+      },
+      "poe_consumption": {
+        "name": "PoE-Verbrauch"
+      },
+      "poe_budget": {
+        "name": "PoE-Budget"
+      },
+      "topology_changes": {
+        "name": "Spanning-Tree-Änderungen"
+      },
+      "speed": {
+        "name": "Port {port} Geschwindigkeit"
+      },
+      "received": {
+        "name": "Port {port} empfangen"
+      },
+      "sent": {
+        "name": "Port {port} gesendet"
+      },
+      "errors": {
+        "name": "Port {port} Fehler"
+      },
+      "device": {
+        "name": "Port {port} Gerät"
+      },
+      "poe": {
+        "name": "Port {port} PoE",
+        "state": {
+          "disabled": "Aus",
+          "searching": "Sucht",
+          "delivering_power": "Liefert Strom",
+          "fault": "Fehler",
+          "test": "Test",
+          "other_fault": "Anderer Fehler"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "auth": {
+      "message": "Der Switch hat die SNMPv3-Zugangsdaten abgelehnt."
+    },
+    "timeout": {
+      "message": "Der Switch hat nicht rechtzeitig geantwortet."
+    },
+    "error": {
+      "message": "Lesen des Switches fehlgeschlagen: {error}"
+    },
+    "resolve": {
+      "message": "Die Adresse des Switches lässt sich nicht auflösen."
+    }
+  }
+}

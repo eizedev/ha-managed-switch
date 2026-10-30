@@ -1,0 +1,183 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a managed switch",
+        "description": "The switch is read over SNMP and never changed. SNMPv3 is recommended: it checks every request and encrypts the answers. [Help]({docs})",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "snmp_version": "SNMP version"
+        },
+        "data_description": {
+          "host": "Address or name of the switch.",
+          "port": "UDP port of the switch's SNMP agent, usually 161.",
+          "snmp_version": "SNMPv1 and v2c send the community in clear text."
+        }
+      },
+      "community": {
+        "title": "SNMP community",
+        "description": "The read-only community of {host}. [Help]({docs})",
+        "data": {
+          "community": "Community"
+        }
+      },
+      "usm": {
+        "title": "SNMPv3 user",
+        "description": "A read-only SNMPv3 user of {host}, with the protocols set for it on the switch. [Help]({docs})",
+        "data": {
+          "user": "User",
+          "auth_protocol": "Authentication protocol",
+          "auth_key": "Authentication password",
+          "priv_protocol": "Privacy protocol",
+          "priv_key": "Privacy password"
+        },
+        "data_description": {
+          "auth_protocol": "Some older switches offer only SHA (SHA-1) or MD5.",
+          "priv_protocol": "Some older switches offer only DES."
+        }
+      },
+      "reconfigure": {
+        "title": "Change the connection",
+        "description": "The next step asks for the credentials again. [Help]({docs})",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "snmp_version": "SNMP version"
+        }
+      }
+    },
+    "error": {
+      "timeout": "The switch did not answer. Check the address, that SNMP is on, and the community (with a wrong community, switches stay silent).",
+      "invalid_auth": "The switch rejected the SNMPv3 user, its passwords or protocols.",
+      "key_missing": "Enter a password for each protocol that is not \"none\", and use privacy only with authentication.",
+      "no_identity": "The switch reports no MAC address, so it cannot be told apart from others.",
+      "cannot_connect": "The switch answered with an error.",
+      "unknown": "Unexpected error, see the log."
+    },
+    "abort": {
+      "already_configured": "This switch is set up already.",
+      "reauth_successful": "The new credentials work.",
+      "reconfigure_successful": "The connection was changed.",
+      "wrong_switch": "That is a different switch than the one set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling",
+        "description": "How often the switch is read. [Help]({docs})",
+        "data": {
+          "fast_interval": "Ports: link, speed and traffic",
+          "slow_interval": "Address table, LLDP, PoE and spanning tree"
+        }
+      }
+    }
+  },
+  "selector": {
+    "snmp_version": {
+      "options": {
+        "3": "SNMPv3 (recommended)",
+        "2c": "SNMPv2c",
+        "1": "SNMPv1"
+      }
+    },
+    "auth_protocol": {
+      "options": {
+        "none": "None",
+        "md5": "MD5",
+        "sha": "SHA (SHA-1)",
+        "sha224": "SHA-224",
+        "sha256": "SHA-256",
+        "sha384": "SHA-384",
+        "sha512": "SHA-512"
+      }
+    },
+    "priv_protocol": {
+      "options": {
+        "none": "None",
+        "des": "DES",
+        "3des": "3DES",
+        "aes128": "AES-128",
+        "aes192": "AES-192",
+        "aes256": "AES-256"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "link": {
+        "name": "Port {port} link"
+      }
+    },
+    "event": {
+      "port_event": {
+        "name": "Switch events",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "uplink_down": "Uplink or trunk lost its link",
+              "speed_dropped": "Port slower than before",
+              "restarted": "Switch restarted",
+              "new_device": "New device"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "boot_time": {
+        "name": "Last restart"
+      },
+      "poe_consumption": {
+        "name": "PoE consumption"
+      },
+      "poe_budget": {
+        "name": "PoE budget"
+      },
+      "topology_changes": {
+        "name": "Spanning tree changes"
+      },
+      "speed": {
+        "name": "Port {port} speed"
+      },
+      "received": {
+        "name": "Port {port} received"
+      },
+      "sent": {
+        "name": "Port {port} sent"
+      },
+      "errors": {
+        "name": "Port {port} errors"
+      },
+      "device": {
+        "name": "Port {port} device"
+      },
+      "poe": {
+        "name": "Port {port} PoE",
+        "state": {
+          "disabled": "Disabled",
+          "searching": "Searching",
+          "delivering_power": "Delivering power",
+          "fault": "Fault",
+          "test": "Test",
+          "other_fault": "Other fault"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "auth": {
+      "message": "The switch rejected the SNMPv3 credentials."
+    },
+    "timeout": {
+      "message": "The switch did not answer in time."
+    },
+    "error": {
+      "message": "Reading the switch failed: {error}"
+    },
+    "resolve": {
+      "message": "The switch's address cannot be resolved."
+    }
+  }
+}
