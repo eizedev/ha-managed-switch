@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-30
+
 ### Fixed
 
 - A switch is recognised after LLDP was turned on or off: reauthentication and *Reconfigure* no
@@ -79,7 +81,8 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.1.0...v0.1.1
