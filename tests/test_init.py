@@ -211,3 +211,14 @@ async def test_one_engine_for_all_switches_closed_at_stop(hass: HomeAssistant) -
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
     await hass.async_block_till_done()
     assert engine.closed
+
+
+def test_manifest_requires_the_tested_library() -> None:
+    """Home Assistant installs the manifest's pin from PyPI; the tests run with uv.lock's."""
+    import importlib.metadata  # noqa: PLC0415
+    import json  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    manifest = Path(__file__).parents[1] / "custom_components" / "managed_switch" / "manifest.json"
+    requirements = json.loads(manifest.read_text(encoding="utf-8"))["requirements"]
+    assert requirements == [f"aiosnmpswitch=={importlib.metadata.version('aiosnmpswitch')}"]
