@@ -25,6 +25,12 @@ Install **Managed Switch (SNMP)**, then restart Home Assistant.
    folder, so that `manifest.json` ends up directly in it.
 4. Restart Home Assistant.
 
+## Updating
+
+HACS shows a new release as an update (also under Settings, Updates). Install it and restart
+Home Assistant. Without HACS, replace the folder's content with the new release's zip and
+restart. The switches, their entities and settings stay.
+
 ## Adding your switches
 
 [![Open your Home Assistant instance and start setting up the integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=managed_switch)

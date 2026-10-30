@@ -101,6 +101,7 @@ PORT_SENSORS: tuple[PortSensorDescription, ...] = (
         translation_key="speed",
         device_class=SensorDeviceClass.DATA_RATE,
         native_unit_of_measurement=UnitOfDataRate.MEGABITS_PER_SECOND,
+        suggested_display_precision=0,
         value=lambda port, _: port.high_speed if port.oper_status == 1 else 0,
     ),
     PortSensorDescription(

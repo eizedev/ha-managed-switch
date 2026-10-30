@@ -52,6 +52,10 @@ hassfest and the HACS check run in CI only.
   flow point to sections of `docs/configuration.md` (`DOCS_*` in `config_flow.py`). The example
   dashboard lives once, in `docs/assets/example-dashboard.yaml`; the blueprint in `blueprints/`.
 
+- **Screenshots** come from the demo instance in `scripts/demo/` (CONTRIBUTING.md, "Demo instance
+  and screenshots"); regenerate them when dialogs or pages change, never take them from a real
+  network.
+
 ## Don'ts
 
 - Don't contact real switches from tests; use `tests/conftest.py`'s `FakeTransport`.

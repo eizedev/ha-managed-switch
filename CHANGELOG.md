@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Screenshots in the README and on the website, from a demo instance (`scripts/demo/`) with three
+  stand-in switches answering SNMP from the test data.
+- Docs: what the SNMP read access must include, what is lost without each MIB, updating,
+  entity IDs in other languages, minimum polling intervals, more troubleshooting.
+
+### Fixed
+
+- Port speed without decimal places.
+
 ## [0.1.1] - 2026-10-30
 
 ### Changed
