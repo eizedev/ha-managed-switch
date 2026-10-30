@@ -78,6 +78,10 @@ async def test_connected_devices(hass: HomeAssistant) -> None:
     assert single.attributes["device_count"] == 1
     mac = single.attributes["devices"][0]["mac"]
     assert single.state == mac
+    assert (single.attributes["port"], single.attributes["if_index"]) == ("2", 2)
+    assert (single.attributes["link"], single.attributes["speed"]) == (True, 100)
+    down = state(hass, "sensor.switch_1_port_4_device")
+    assert (down.attributes["link"], down.attributes["speed"]) == (False, 0)
     # an access point with its Wi-Fi clients
     assert state(hass, "sensor.switch_2_port_4_device").attributes["device_count"] == 9
     assert state(hass, "sensor.switch_2_port_4_device").state.endswith(" +8")

@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from aiosnmpswitch import Interface, PseDetectionStatus, PsePort
+from aiosnmpswitch import Interface, OperStatus, PseDetectionStatus, PsePort
+from aiosnmpswitch.helpers import port_name
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -187,7 +188,9 @@ class PortSensor(PortEntity[FastCoordinator], SensorEntity):
 class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
     """What is connected to a port: one name, or the first name and how many more."""
 
-    _unrecorded_attributes = frozenset({"devices"})
+    # The port's link and speed are here too, so a dashboard needs only this sensor; they have
+    # their own entities with history, so they are not recorded twice.
+    _unrecorded_attributes = frozenset({"devices", "port", "if_index", "link", "speed"})
 
     def __init__(
         self, entry: SwitchConfigEntry, coordinator: FastCoordinator, interface: Interface
@@ -214,9 +217,18 @@ class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """All devices on the port, with MAC and IP addresses."""
+        """All devices on the port, with MAC and IP addresses; the port's name, link and speed."""
         devices = connected(self.hass, self.entry, self.if_index)
-        return {"device_count": len(devices), "devices": [d.as_dict() for d in devices]}
+        interface = self.interface
+        assert interface is not None  # noqa: S101 - unavailable otherwise, attributes not read
+        return {
+            "device_count": len(devices),
+            "devices": [d.as_dict() for d in devices],
+            "port": port_name(interface),
+            "if_index": self.if_index,
+            "link": interface.oper_status is OperStatus.UP,
+            "speed": interface.high_speed if interface.oper_status is OperStatus.UP else 0,
+        }
 
 
 class PoeSensor(PortEntity[SlowCoordinator], SensorEntity):
