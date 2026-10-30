@@ -231,11 +231,15 @@ wheels = [
 
 [[package]]
 name = "aiosnmpswitch"
-version = "0.1.dev3+gaee5c6b13"
-source = { git = "https://github.com/eizedev/aiosnmpswitch?rev=aee5c6b13965188e68d57c8bb97a3e84a27c6428#aee5c6b13965188e68d57c8bb97a3e84a27c6428" }
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "pysnmp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/85/29/f7c64f64b46312dfd67246b7d93abcdb8b3c508782a430a10a79f806d5b9/aiosnmpswitch-0.1.0.tar.gz", hash = "sha256:8940e3f0a20bcc32a563e86b8d8c770e69c0db5a5e834950ce80df5b702f6bc1", size = 135898, upload-time = "2026-10-30T14:19:35.663Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/67/2d9584978d354150f10e799caf70fc9732fd93eef27d47bb5cd82b1c461c/aiosnmpswitch-0.1.0-py3-none-any.whl", hash = "sha256:11927ed4902f05bc6a869123763f93c4b9975f29d54b478257533e1027808da5", size = 28708, upload-time = "2026-10-30T14:19:34.144Z" },
 ]
 
 [[package]]
@@ -1219,7 +1223,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "aiosnmpswitch", git = "https://github.com/eizedev/aiosnmpswitch?rev=aee5c6b13965188e68d57c8bb97a3e84a27c6428" },
+    { name = "aiosnmpswitch", specifier = "==0.1.0" },
     { name = "mypy", specifier = ">=1.15" },
     { name = "pytest-homeassistant-custom-component", specifier = "==0.13.374" },
     { name = "ruff", specifier = ">=0.11" },

@@ -8,17 +8,13 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pytest-homeassistant-custom-component==0.13.374",
-    "aiosnmpswitch",
+    "aiosnmpswitch==0.1.0",
     "mypy>=1.15",
     "ruff>=0.11",
 ]
 
 [tool.uv]
 package = false
-
-[tool.uv.sources]
-# Until aiosnmpswitch is on PyPI: the library at a fixed commit.
-aiosnmpswitch = { git = "https://github.com/eizedev/aiosnmpswitch", rev = "aee5c6b13965188e68d57c8bb97a3e84a27c6428" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
