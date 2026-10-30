@@ -9,5 +9,5 @@
   "issue_tracker": "https://github.com/eizedev/ha-managed-switch/issues",
   "loggers": ["aiosnmpswitch", "pysnmp"],
   "requirements": ["aiosnmpswitch==0.1.0"],
-  "version": "0.1.1"
+  "version": "0.2.0"
 }

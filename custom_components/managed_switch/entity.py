@@ -45,11 +45,16 @@ def url_host(host: str) -> str:
     return f"[{host}]" if ":" in host and not host.startswith("[") else host
 
 
+def entry_uid(entry: SwitchConfigEntry) -> str:
+    """Return the prefix of the entry's device identifier and entity unique IDs."""
+    return entry.unique_id or entry.entry_id
+
+
 def device_info(entry: SwitchConfigEntry) -> DeviceInfo:
     """Describe the switch of an entry for the device registry."""
     system = entry.runtime_data.slow.data.system
     info = DeviceInfo(
-        identifiers={(DOMAIN, entry.unique_id or entry.entry_id)},
+        identifiers={(DOMAIN, entry_uid(entry))},
         manufacturer=vendor(system),
         model=model(system),
         name=entry.title,
@@ -110,7 +115,7 @@ class SwitchEntity[CoordinatorT: DataUpdateCoordinator[Any]](CoordinatorEntity[C
         super().__init__(coordinator)
         self.entry = entry
         self.entity_description = description
-        self._attr_unique_id = f"{entry.unique_id or entry.entry_id}_{description.key}"
+        self._attr_unique_id = f"{entry_uid(entry)}_{description.key}"
         self._attr_device_info = device_info(entry)
 
 
@@ -127,9 +132,7 @@ class PortEntity[CoordinatorT: DataUpdateCoordinator[Any]](SwitchEntity[Coordina
         """Bind the entity to its port by ``ifIndex``."""
         super().__init__(entry, coordinator, description)
         self.if_index = interface.index
-        self._attr_unique_id = (
-            f"{entry.unique_id or entry.entry_id}_{interface.index}_{description.key}"
-        )
+        self._attr_unique_id = f"{entry_uid(entry)}_{interface.index}_{description.key}"
         self._attr_translation_placeholders = {"port": port_name(interface)}
 
     @property
