@@ -19,6 +19,7 @@ from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .coordinator import (
     SIGNAL_LOCATIONS,
@@ -29,7 +30,7 @@ from .coordinator import (
     SwitchConfigEntry,
 )
 from .devices import connected, summary
-from .entity import PortEntity, SwitchEntity, ports
+from .entity import PortEntity, SwitchEntity, async_add_per_port
 
 PARALLEL_UPDATES = 0
 POE_STATES = [state.name.lower() for state in PseDetectionStatus]
@@ -151,13 +152,27 @@ async def async_setup_entry(
         for description in SWITCH_SENSORS
         if description.exists(runtime.slow.data)
     ]
-    poe_ports = {p.index: p for p in (runtime.slow.data.poe.ports if runtime.slow.data.poe else [])}
-    for interface in ports(entry):
-        entities += [PortSensor(entry, runtime.fast, d, interface) for d in PORT_SENSORS]
-        entities.append(DeviceSensor(entry, runtime.fast, interface))
-        if interface.index in poe_ports:
-            entities.append(PoeSensor(entry, runtime.slow, interface))
     async_add_entities(entities)
+
+    def add_port_sensors(new: list[Interface]) -> None:
+        port_entities: list[SensorEntity] = []
+        for interface in new:
+            port_entities += [PortSensor(entry, runtime.fast, d, interface) for d in PORT_SENSORS]
+            port_entities.append(DeviceSensor(entry, runtime.fast, interface))
+        async_add_entities(port_entities)
+
+    def is_poe_port(interface: Interface) -> bool:
+        poe = runtime.slow.data.poe
+        return poe is not None and any(p.index == interface.index for p in poe.ports)
+
+    coordinators: list[DataUpdateCoordinator[Any]] = [runtime.fast, runtime.slow]
+    async_add_per_port(entry, coordinators, add_port_sensors)
+    async_add_per_port(
+        entry,
+        coordinators,
+        lambda new: async_add_entities(PoeSensor(entry, runtime.slow, i) for i in new),
+        is_poe_port,
+    )
 
 
 class SwitchSensor(SwitchEntity[SlowCoordinator], SensorEntity):

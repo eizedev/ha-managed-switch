@@ -43,6 +43,7 @@ async def test_snmpv3(hass: HomeAssistant) -> None:
     assert result["result"].unique_id == "02:00:00:00:00:02"
     assert result["data"] == entry_data("192.0.2.1", "3")
     assert FakeTransport.instances[0].closed  # the probe does not stay connected
+    assert FakeTransport.instances[0].options["engine"] is None  # and uses no shared engine
 
 
 async def test_snmpv2c_on_a_1930(hass: HomeAssistant) -> None:

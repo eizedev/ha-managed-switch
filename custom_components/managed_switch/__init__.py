@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Any
 
 from aiosnmpswitch import (
@@ -59,28 +61,58 @@ def auth_from(data: Mapping[str, Any]) -> CommunityAuth | UsmAuth:
     )
 
 
-@singleton(f"{DOMAIN}_engine")
-async def get_engine(hass: HomeAssistant) -> Any:
-    """Return the SNMP engine all switches share, prepared outside the event loop."""
-    engine = await create_engine()
+@dataclass
+class _Engines:
+    """SNMP engines, one per set of credentials, closed when Home Assistant stops."""
+
+    by_credentials: dict[tuple[Any, ...], Any] = field(default_factory=dict)
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+
+
+@singleton(f"{DOMAIN}_engines")
+async def _engines(hass: HomeAssistant) -> _Engines:
+    engines = _Engines()
 
     @callback
     def _close(_: Event) -> None:
-        engine.close_dispatcher()
+        for engine in engines.by_credentials.values():
+            engine.close_dispatcher()
 
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close)
-    return engine
+    return engines
 
 
-async def connect(hass: HomeAssistant, data: Mapping[str, Any]) -> SnmpSwitch:
-    """Create a client for the switch an entry's data describes."""
+async def get_engine(hass: HomeAssistant, auth: CommunityAuth | UsmAuth) -> Any:
+    """Return an SNMP engine for these credentials, prepared outside the event loop.
+
+    Switches with the same credentials share one. pysnmp keeps an SNMPv3 user in its engine by
+    name: two switches with the same user name but different passwords in one engine would
+    replace each other's keys, so different SNMPv3 credentials get different engines.
+    """
+    key: tuple[Any, ...] = ("community",)
+    if isinstance(auth, UsmAuth):
+        key = (auth.user, auth.auth_protocol, auth.auth_key, auth.priv_protocol, auth.priv_key)
+    engines = await _engines(hass)
+    async with engines.lock:
+        if key not in engines.by_credentials:
+            engines.by_credentials[key] = await create_engine()
+        return engines.by_credentials[key]
+
+
+async def connect(hass: HomeAssistant, data: Mapping[str, Any], shared: bool = True) -> SnmpSwitch:
+    """Create a client for the switch an entry's data describes.
+
+    ``shared=False`` (the setup dialog's test) uses an engine of its own that closes with the
+    client, so mistyped credentials leave nothing behind.
+    """
+    auth = auth_from(data)
     transport = await PysnmpTransport.create(
         data[CONF_HOST],
-        auth_from(data),
+        auth,
         port=int(data.get(CONF_PORT, DEFAULT_PORT)),
         timeout=REQUEST_TIMEOUT,
         retries=REQUEST_RETRIES,
-        engine=await get_engine(hass),
+        engine=await get_engine(hass, auth) if shared else None,
     )
     return SnmpSwitch(transport)
 
@@ -101,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SwitchConfigEntry) -> bo
         await hub.async_load()
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     except BaseException:
-        await switch.close()  # no SNMP engine left behind for every retry
+        await switch.close()
         raise
     hub.async_add(entry)
     return True

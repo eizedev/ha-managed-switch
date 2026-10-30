@@ -163,6 +163,23 @@ async def test_uplink_down_after_lldp_forgot_the_neighbour(hass: HomeAssistant) 
     assert (last(hass)["event_type"], last(hass)["port"]) == ("uplink_down", "7")
 
 
+async def test_a_second_uptime_wrap_is_no_restart(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory
+) -> None:
+    [entry] = await setup(hass, "192.0.2.1")
+    slow = entry.runtime_data.slow
+    before = slow.data.boot_time
+    fake = transport("192.0.2.1")
+    uptime = fake._values[UPTIME]
+    assert isinstance(uptime, int)
+    fake.set(UPTIME, uptime - 2 * 2**32 + 1000)  # as if it had wrapped twice
+    freezer.tick(timedelta(seconds=10))
+    await slow.async_refresh()
+    await hass.async_block_till_done()
+    assert slow.data.boot_time == before
+    assert state(hass, EVENT).state == "unknown"
+
+
 async def test_uptime_wrap_is_no_restart(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
 ) -> None:
@@ -207,3 +224,18 @@ async def test_remembered_devices_are_capped(hass: HomeAssistant, monkeypatch: A
     hub = get_hub(hass)
     assert hub._known is not None
     assert len(hub._known) == 3
+
+
+async def test_devices_seen_again_are_kept_longest(hass: HomeAssistant, monkeypatch: Any) -> None:
+    from custom_components.managed_switch import coordinator  # noqa: PLC0415
+
+    await setup(hass, "192.0.2.1")
+    hub = get_hub(hass)
+    assert hub._known is not None
+    located = list(hub.locations)
+    old = [f"02:00:00:00:ff:{n:02x}" for n in range(3)]  # devices gone for good, seen later
+    hub._known = dict.fromkeys(located[1:] + old)  # located[0] comes as new and fills it up
+    monkeypatch.setattr(coordinator, "MAX_KNOWN", len(located))
+    hub.async_update()
+    await hass.async_block_till_done()
+    assert set(hub._known) == set(located)  # the old ones go, though the others came first

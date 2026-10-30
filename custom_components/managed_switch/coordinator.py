@@ -196,11 +196,12 @@ class SlowCoordinator(DataUpdateCoordinator[SlowData]):
             # sysUpTime is read a moment later each time: keep the boot time unless it moved.
             # A jump of about 497 days is sysUpTime wrapping around, not a restart.
             moved = (boot_time - previous) if previous else None
-            if moved is not None and (
-                abs(moved.total_seconds()) < 60  # noqa: PLR2004
-                or abs((moved - _UPTIME_WRAP).total_seconds()) < 3600  # noqa: PLR2004
-            ):
-                boot_time = previous
+            if moved is not None:
+                wraps = round(moved / _UPTIME_WRAP)  # 0, or how often it wrapped meanwhile
+                if abs((moved - wraps * _UPTIME_WRAP).total_seconds()) < (
+                    60 if wraps == 0 else 3600
+                ):
+                    boot_time = previous
         values: dict[str, Any] = {}
         for name, getter in SLOW_READS:
             try:
@@ -269,6 +270,9 @@ class NetworkHub:
         self.locations = locate_macs(switches)
         known = self._known if self._known is not None else {}
         new = [loc for mac, loc in self.locations.items() if mac not in known]
+        for mac in self.locations.keys() & known.keys():  # seen again: the newest to keep
+            del known[mac]
+            known[mac] = None
         if new:
             announce = announce and bool(known)  # the very first run only learns
             for location in new:
