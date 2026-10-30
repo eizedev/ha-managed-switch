@@ -52,7 +52,9 @@ triggers:
 variables:
   event_types: !input event_types
   event_type: "{{ trigger.to_state.attributes.event_type }}"
-  switch: "{{ device_attr(device_id(trigger.entity_id), 'name') or trigger.entity_id }}"
+  switch: >-
+    {% set device = device_id(trigger.entity_id) %}
+    {{ device_attr(device, 'name_by_user') or device_attr(device, 'name') or trigger.entity_id }}
   port: "{{ trigger.to_state.attributes.port | default('') }}"
   title: "{{ switch }}"
   message: >-

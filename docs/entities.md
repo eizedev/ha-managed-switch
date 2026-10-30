@@ -22,7 +22,7 @@ link*.
 | Port … speed | link speed in Mbit/s, 0 without link |
 | Port … device | what is connected: see below |
 | Port … PoE | PoE state of the port: searching, delivering power, fault, … (PoE ports only) |
-| Port … received, sent | traffic in bit/s over the last polling interval (off by default) |
+| Port … received, sent | traffic in bit/s over the last polling interval (off by default; needs 64-bit counters) |
 | Port … errors | received and sent errors since the restart (off by default) |
 
 ### Port … device

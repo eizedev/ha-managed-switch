@@ -20,6 +20,10 @@ Assistant's address.
 Where these settings are differs per switch and firmware; look for *SNMP* in the switch's web
 interface and its manual.
 
+**LLDP** should be on on every switch (most managed switches have it on by default). Only through
+LLDP does the integration recognise the links between your switches; without it, a neighbour
+switch and everything behind it look like devices on that port, and `uplink_down` cannot fire.
+
 ## Setup
 
 | Field | Meaning |
@@ -30,8 +34,13 @@ interface and its manual.
 | Community | SNMPv1 and v2c only |
 | User, protocols, passwords | SNMPv3 only; must match the user on the switch |
 
-The switch is identified by its MAC address, so a new address later is a matter of
-*Reconfigure* (the three dots of the entry); the entities stay. When the switch rejects the
+The switch is identified by its MAC address (the LLDP chassis ID, or the lowest port MAC address
+when LLDP is off), so a new address later is a matter of *Reconfigure* (the three dots of the
+entry); the entities stay. Turning LLDP on or off may change which MAC address is found; the
+integration then reports a different switch, and the entry has to be added again.
+
+Ports are read when the entry loads. A port, trunk or PoE port that appears later (a new trunk,
+PoE read only after a failed first try) gets its entities after *Reload* of the entry. When the switch rejects the
 credentials, Home Assistant asks for new ones (*Reauthenticate*).
 
 ## Options

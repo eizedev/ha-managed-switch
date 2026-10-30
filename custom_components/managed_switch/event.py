@@ -60,6 +60,9 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
             if _is_up(i) and i.high_speed
         }
         self._boot_time: datetime | None = entry.runtime_data.slow.data.boot_time
+        # Uplinks as they were while up: LLDP forgets a neighbour soon after its link drops, and
+        # the slow tables may be read again before the port's link loss is seen.
+        self._watched_before: set[int] = set()
 
     async def async_added_to_hass(self) -> None:
         """Watch the ports, the restarts and the hub's new devices."""
@@ -83,16 +86,18 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
     def _handle_coordinator_update(self) -> None:
         """Compare each port with its previous reading."""
         interfaces = self.coordinator.data.interfaces
-        watched = self._watched()
+        current = self._watched()
+        watched = current | self._watched_before
+        self._watched_before = current
         for index, now in interfaces.items():
             before = self._interfaces.get(index)
             name = port_name(now)
             if index in watched and _is_up(before) and not _is_up(now):
-                self._trigger_event(EVENT_UPLINK_DOWN, {"port": name, "if_index": index})
+                self._fire(EVENT_UPLINK_DOWN, {"port": name, "if_index": index})
             if _is_up(now) and now.high_speed:
                 last = self._last_speed.get(index)
                 if last and now.high_speed < last:
-                    self._trigger_event(
+                    self._fire(
                         EVENT_SPEED_DROPPED,
                         {
                             "port": name,
@@ -106,12 +111,17 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
         super()._handle_coordinator_update()
 
     @callback
+    def _fire(self, event_type: str, attributes: dict[str, object]) -> None:
+        """Fire and write the state at once, so two events in one update are both seen."""
+        self._trigger_event(event_type, attributes)
+        self.async_write_ha_state()
+
+    @callback
     def _slow_updated(self) -> None:
         """Fire when the switch booted again since the previous reading."""
         boot_time = self.entry.runtime_data.slow.data.boot_time
         if boot_time and self._boot_time and boot_time > self._boot_time:
-            self._trigger_event(EVENT_RESTARTED, {"boot_time": boot_time.isoformat()})
-            self.async_write_ha_state()
+            self._fire(EVENT_RESTARTED, {"boot_time": boot_time.isoformat()})
         if boot_time:
             self._boot_time = boot_time
 
@@ -120,7 +130,7 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
         """Fire for a device seen for the first time, on this switch."""
         if location.switch != self.entry.entry_id:
             return
-        self._trigger_event(
+        self._fire(
             EVENT_NEW_DEVICE,
             {
                 "port": location.port_name,
@@ -130,4 +140,3 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
                 "ip_addresses": list(location.ip_addresses),
             },
         )
-        self.async_write_ha_state()

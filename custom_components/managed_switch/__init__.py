@@ -16,7 +16,7 @@ from aiosnmpswitch import (
 )
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 
 # Loaded here, while Home Assistant imports the integration outside the event loop: pysnmp reads
@@ -85,12 +85,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SwitchConfigEntry) -> bo
     try:
         await slow.async_config_entry_first_refresh()
         await fast.async_config_entry_first_refresh()
-    except ConfigEntryAuthFailed, ConfigEntryNotReady:
-        await switch.close()
+        hub = get_hub(hass)
+        await hub.async_load()
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    except BaseException:
+        await switch.close()  # no SNMP engine left behind for every retry
         raise
-    hub = get_hub(hass)
-    await hub.async_load()
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     hub.async_add(entry)
     return True
 

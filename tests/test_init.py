@@ -165,3 +165,37 @@ async def test_device_cannot_be_removed(hass: HomeAssistant) -> None:
     from custom_components.managed_switch import async_remove_config_entry_device  # noqa: PLC0415
 
     assert not await async_remove_config_entry_device(hass, entry, device)
+
+
+async def test_ipv6_host(hass: HomeAssistant) -> None:
+    from .conftest import HOSTS, UNIQUE_IDS  # noqa: PLC0415
+
+    HOSTS["2001:db8::1"] = HOSTS["192.0.2.1"]
+    try:
+        entry = MockConfigEntry(
+            domain="managed_switch",
+            title="switch-1",
+            unique_id=UNIQUE_IDS["192.0.2.1"],
+            data=entry_data("2001:db8::1"),
+        )
+        entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        [device] = dr.async_get(hass).async_get_devices(
+            connections={(dr.CONNECTION_NETWORK_MAC, "02:00:00:00:00:02")}
+        )
+        assert device.configuration_url == "http://[2001:db8::1]/"
+    finally:
+        del HOSTS["2001:db8::1"]
+
+
+async def test_setup_closes_the_switch_on_any_error(hass: HomeAssistant) -> None:
+    from unittest.mock import patch  # noqa: PLC0415
+
+    entry = make_entry("192.0.2.1")
+    entry.add_to_hass(hass)
+    with patch.object(
+        hass.config_entries, "async_forward_entry_setups", side_effect=RuntimeError("boom")
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+    assert transport("192.0.2.1").closed

@@ -38,6 +38,11 @@ def firmware(system: SystemInfo) -> str | None:
     return system.descr.split(",")[1].strip() or None
 
 
+def url_host(host: str) -> str:
+    """Return a host as it goes into a URL: IPv6 addresses in brackets."""
+    return f"[{host}]" if ":" in host and not host.startswith("[") else host
+
+
 def device_info(entry: SwitchConfigEntry) -> DeviceInfo:
     """Describe the switch of an entry for the device registry."""
     system = entry.runtime_data.slow.data.system
@@ -47,7 +52,7 @@ def device_info(entry: SwitchConfigEntry) -> DeviceInfo:
         model=model(system),
         name=entry.title,
         sw_version=firmware(system),
-        configuration_url=f"http://{entry.data[CONF_HOST]}/",
+        configuration_url=f"http://{url_host(entry.data[CONF_HOST])}/",
     )
     if entry.unique_id:
         info["connections"] = {(CONNECTION_NETWORK_MAC, entry.unique_id)}
