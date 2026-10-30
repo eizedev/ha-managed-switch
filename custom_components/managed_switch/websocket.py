@@ -83,6 +83,7 @@ def ws_ports(
     poe = entry.runtime_data.slow.data.poe
     poe_ports = {p.index for p in poe.ports} if poe else set()
     system = entry.runtime_data.slow.data.system
+    chassis = entry.runtime_data.slow.data.chassis
     result_ports = []
     for interface in ports(entry):
         index = interface.index
@@ -110,8 +111,8 @@ def ws_ports(
                 "entry_id": entry.entry_id,
                 "name": entry.title,
                 "vendor": vendor(system),
-                "model": model(system),
-                "firmware": firmware(system),
+                "model": model(system, chassis),
+                "firmware": firmware(system, chassis),
                 "object_id": system.object_id,
                 "entities": {
                     key: entity_id(platform, f"{uid}_{key}")

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from aiosnmpswitch import Interface, SystemInfo
+from aiosnmpswitch import Chassis, Interface, SystemInfo
 from aiosnmpswitch.helpers import is_ethernet_port, lag_members, port_name
 from homeassistant.const import CONF_HOST
 from homeassistant.core import callback
@@ -28,13 +28,21 @@ def vendor(system: SystemInfo) -> str | None:
     return VENDORS.get(int(number)) if number.isdigit() else None
 
 
-def model(system: SystemInfo) -> str | None:
-    """Return the model: ``sysDescr`` up to the first comma (the firmware follows)."""
+def model(system: SystemInfo, chassis: Chassis | None = None) -> str | None:
+    """Return the model: the ENTITY-MIB chassis's name, else ``sysDescr`` up to the first comma.
+
+    ``sysDescr`` is "model, firmware, ..." on HPE and many others, but not on every vendor (Cisco
+    starts with the operating system); the chassis entry names the product on its own.
+    """
+    if chassis is not None and (chassis.descr or chassis.model_name):
+        return chassis.descr or chassis.model_name
     return system.descr.split(",", 1)[0].strip() if system.descr else None
 
 
-def firmware(system: SystemInfo) -> str | None:
-    """Return the firmware: the part of ``sysDescr`` after the model, to the next comma."""
+def firmware(system: SystemInfo, chassis: Chassis | None = None) -> str | None:
+    """Return the firmware: the chassis's software revision, else the 2nd part of ``sysDescr``."""
+    if chassis is not None and chassis.software_rev:
+        return chassis.software_rev
     if not system.descr or "," not in system.descr:
         return None
     return system.descr.split(",")[1].strip() or None
@@ -52,13 +60,14 @@ def entry_uid(entry: SwitchConfigEntry) -> str:
 
 def device_info(entry: SwitchConfigEntry) -> DeviceInfo:
     """Describe the switch of an entry for the device registry."""
-    system = entry.runtime_data.slow.data.system
+    slow = entry.runtime_data.slow.data
+    system = slow.system
     info = DeviceInfo(
         identifiers={(DOMAIN, entry_uid(entry))},
         manufacturer=vendor(system),
-        model=model(system),
+        model=model(system, slow.chassis),
         name=entry.title,
-        sw_version=firmware(system),
+        sw_version=firmware(system, slow.chassis),
         configuration_url=f"http://{url_host(entry.data[CONF_HOST])}/",
     )
     if entry.unique_id:

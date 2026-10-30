@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from aiosnmpswitch import Interface, Lldp, LldpRemote, Poe, PsePort, SystemInfo
+from aiosnmpswitch import Chassis, Interface, Lldp, LldpRemote, Poe, PsePort, SystemInfo
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
@@ -30,6 +30,15 @@ def test_vendor_model_firmware() -> None:
     assert firmware(system("GS108T", None)) is None
     assert firmware(system("GS108T, ", None)) is None
     assert firmware(system("GS108T, 7.0.1", None)) == "7.0.1"
+    # sysDescr not "model, firmware" (Cisco): the ENTITY-MIB chassis names both
+    cisco = system(
+        "Cisco IOS Software, C2960 Software (C2960-LANBASEK9-M), Version 15.0(2)SE", None
+    )
+    chassis = Chassis(descr=None, model_name="WS-C2960-24TT-L", software_rev="15.0(2)SE")
+    assert (model(cisco, chassis), firmware(cisco, chassis)) == ("WS-C2960-24TT-L", "15.0(2)SE")
+    assert model(cisco, Chassis(descr=None, model_name=None, software_rev=None)) == (
+        "Cisco IOS Software"
+    )
 
 
 def test_summary() -> None:

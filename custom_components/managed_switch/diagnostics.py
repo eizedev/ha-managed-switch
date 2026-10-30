@@ -29,6 +29,15 @@ async def async_get_config_entry_diagnostics(
             "options": dict(entry.options),
         },
         "system": {"descr": system.descr, "object_id": system.object_id},
+        "chassis": (
+            {
+                "descr": slow.chassis.descr,
+                "model_name": slow.chassis.model_name,
+                "software_rev": slow.chassis.software_rev,
+            }
+            if slow.chassis
+            else None
+        ),
         "interfaces": {
             "count": len(fast.interfaces),
             "types": dict(Counter(i.type for i in fast.interfaces.values())),

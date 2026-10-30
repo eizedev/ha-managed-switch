@@ -231,15 +231,15 @@ wheels = [
 
 [[package]]
 name = "aiosnmpswitch"
-version = "0.1.0"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "pysnmp" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/85/29/f7c64f64b46312dfd67246b7d93abcdb8b3c508782a430a10a79f806d5b9/aiosnmpswitch-0.1.0.tar.gz", hash = "sha256:8940e3f0a20bcc32a563e86b8d8c770e69c0db5a5e834950ce80df5b702f6bc1", size = 135898, upload-time = "2026-10-30T14:19:35.663Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/05/0116be0c7ad6c85dc40243d41421f135cf20c774ebbca058d813c6dfb25b/aiosnmpswitch-0.2.0.tar.gz", hash = "sha256:9aee9c4d0ee6f66df8f27bb841d8752a1a81774a4c2627f9dec88a7b1c015161", size = 137944, upload-time = "2026-10-30T18:22:41.702Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/67/2d9584978d354150f10e799caf70fc9732fd93eef27d47bb5cd82b1c461c/aiosnmpswitch-0.1.0-py3-none-any.whl", hash = "sha256:11927ed4902f05bc6a869123763f93c4b9975f29d54b478257533e1027808da5", size = 28708, upload-time = "2026-10-30T14:19:34.144Z" },
+    { url = "https://files.pythonhosted.org/packages/03/32/419731b3fc6b14281e4b2dbd9d9ddc623f68b6c91c1842a2de0a998fde0e/aiosnmpswitch-0.2.0-py3-none-any.whl", hash = "sha256:fb5abbcd729953b6db861a017d7dcaee875f81003d0f2445d13d383bbf6c5094", size = 29384, upload-time = "2026-10-30T18:22:40.534Z" },
 ]
 
 [[package]]
@@ -1223,7 +1223,7 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "aiosnmpswitch", specifier = "==0.1.0" },
+    { name = "aiosnmpswitch", specifier = "==0.2.0" },
     { name = "mypy", specifier = ">=1.15" },
     { name = "pytest-homeassistant-custom-component", specifier = "==0.13.374" },
     { name = "ruff", specifier = ">=0.11" },
