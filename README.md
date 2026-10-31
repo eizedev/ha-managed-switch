@@ -31,7 +31,8 @@ only: it never changes a setting.
   temperatures where the switch reports them.
 - Per port (and per trunk): link, speed, the connected device (an LLDP neighbour such as
   another switch, or the devices learned on the port, named from Home Assistant's device
-  registry), PoE status, and on request received and sent traffic and errors.
+  registry) and how many devices are on it, PoE status, and on request received and sent
+  traffic and errors.
 - One events entity per switch with a ready blueprint for notifications.
 - SNMPv3 (recommended) or v2c, standard MIBs, plus the HPE 1930's own sensor table:
   vendor-neutral. Tested on HPE OfficeConnect 1920S and HPE Instant On 1930; other managed

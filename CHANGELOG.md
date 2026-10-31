@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
+### Added
+
+- A *Port … devices* sensor per port: how many devices are on the port, 0 on an empty port.
+  The *Port … device* sensor stays `unknown` there, since no device has a name; health checks
+  that count long-`unknown` entities can leave it out and use the count instead.
+
 ## [0.4.0] - 2026-10-30
 
 ### Added

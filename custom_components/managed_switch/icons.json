@@ -41,6 +41,9 @@
       "device": {
         "default": "mdi:lan-connect"
       },
+      "devices": {
+        "default": "mdi:devices"
+      },
       "poe": {
         "default": "mdi:power-plug-outline",
         "state": {

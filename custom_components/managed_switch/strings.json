@@ -168,6 +168,9 @@
       "device": {
         "name": "Port {port} device"
       },
+      "devices": {
+        "name": "Port {port} devices"
+      },
       "poe": {
         "name": "Port {port} PoE",
         "state": {

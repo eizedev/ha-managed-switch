@@ -25,6 +25,7 @@ the language Home Assistant used when they were created).
 | Port … link | on while the port has a link |
 | Port … speed | link speed in Mbit/s, 0 without link |
 | Port … device | what is connected: see below |
+| Port … devices | how many devices are on the port, 0 on an empty port (where *Port … device* is `unknown`) |
 | Port … PoE | PoE state of the port: `disabled`, `searching`, `delivering_power`, `fault`, `test`, `other_fault`; attributes `enabled` and `power_class` (PoE ports only) |
 | Port … received, sent | traffic in bit/s over the last polling interval (off by default; needs 64-bit counters) |
 | Port … errors | received and sent errors since the restart (off by default) |

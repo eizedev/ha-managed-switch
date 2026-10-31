@@ -173,6 +173,7 @@ async def async_setup_entry(
         for interface in new:
             port_entities += [PortSensor(entry, runtime.fast, d, interface) for d in PORT_SENSORS]
             port_entities.append(DeviceSensor(entry, runtime.fast, interface))
+            port_entities.append(DeviceCountSensor(entry, runtime.fast, interface))
         async_add_entities(port_entities)
 
     def is_poe_port(interface: Interface) -> bool:
@@ -244,23 +245,16 @@ class PortSensor(PortEntity[FastCoordinator], SensorEntity):
         )
 
 
-class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
-    """What is connected to a port: one name, or the first name and how many more."""
+class PortDevicesSensor(PortEntity[FastCoordinator], SensorEntity):
+    """A sensor of the devices on a port, written when they change."""
 
-    # The port's link and speed are here too, so a dashboard needs only this sensor; they have
-    # their own entities with history, so they are not recorded twice.
-    _unrecorded_attributes = frozenset({"devices", "port", "if_index", "link", "speed"})
+    description: SensorEntityDescription
 
     def __init__(
         self, entry: SwitchConfigEntry, coordinator: FastCoordinator, interface: Interface
     ) -> None:
         """Describe the sensor for its port."""
-        super().__init__(
-            entry,
-            coordinator,
-            SensorEntityDescription(key="device", translation_key="device"),
-            interface,
-        )
+        super().__init__(entry, coordinator, self.description, interface)
         self._devices: list[Connected] = []
         """The devices on the port, worked out once per write (registry lookups per MAC)."""
 
@@ -286,6 +280,16 @@ class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
             self._devices = devices
             self.async_write_ha_state()
 
+
+class DeviceSensor(PortDevicesSensor):
+    """What is connected to a port: one name, or the first name and how many more."""
+
+    # The port's link and speed are here too, so a dashboard needs only this sensor; they have
+    # their own entities with history, so they are not recorded twice.
+    _unrecorded_attributes = frozenset({"devices", "port", "if_index", "link", "speed"})
+
+    description = SensorEntityDescription(key="device", translation_key="device")
+
     @property
     def native_value(self) -> str | None:
         """The first device's name, with the number of others."""
@@ -305,6 +309,19 @@ class DeviceSensor(PortEntity[FastCoordinator], SensorEntity):
             "link": interface.oper_status is OperStatus.UP,
             "speed": interface.high_speed if interface.oper_status is OperStatus.UP else 0,
         }
+
+
+class DeviceCountSensor(PortDevicesSensor):
+    """How many devices are on a port: 0 on an empty port, where the device sensor is unknown."""
+
+    description = SensorEntityDescription(
+        key="devices", translation_key="devices", state_class=SensorStateClass.MEASUREMENT
+    )
+
+    @property
+    def native_value(self) -> int:
+        """The number of devices on the port."""
+        return len(self._devices)
 
 
 class PoeSensor(PortEntity[SlowCoordinator], SensorEntity):

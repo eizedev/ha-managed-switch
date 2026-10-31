@@ -143,6 +143,7 @@ async def test_device_sensor_writes_only_when_its_devices_change(hass: HomeAssis
     after = state(hass, sensor)
     assert after.last_reported != before.last_reported
     assert after.attributes["device_count"] == before.attributes["device_count"] - 1
+    assert state(hass, f"{sensor}s").state == str(after.attributes["device_count"])
 
 
 async def test_temperatures_of_a_1930(hass: HomeAssistant) -> None:
@@ -202,3 +203,23 @@ async def test_temperature_without_a_name(hass: HomeAssistant) -> None:
     await entry.runtime_data.slow.async_refresh()
     await hass.async_block_till_done()
     assert state(hass, "sensor.switch_3_temperature_68420483").state == "41.0"
+
+
+async def test_device_count_is_0_on_an_empty_port(hass: HomeAssistant) -> None:
+    entry = make_entry("192.0.2.1")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    names = {
+        s: state(hass, s)
+        for s in hass.states.async_entity_ids("sensor")
+        if s.startswith("sensor.switch_1_port_") and s.endswith("_device")
+    }
+    for sensor, name in names.items():
+        count = state(hass, f"{sensor}s")
+        assert count.state == str(name.attributes["device_count"])
+        assert count.attributes.get("state_class") == "measurement"
+        assert "devices" not in count.attributes
+    empty = [s for s, name in names.items() if name.state == "unknown"]
+    assert empty  # the recording has ports without a device
+    assert {state(hass, f"{s}s").state for s in empty} == {"0"}
