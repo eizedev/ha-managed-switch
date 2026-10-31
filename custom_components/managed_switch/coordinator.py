@@ -21,6 +21,7 @@ from aiosnmpswitch import (
     SnmpTimeoutError,
     StpInfo,
     SystemInfo,
+    Temperature,
 )
 from aiosnmpswitch.helpers import MacLocation, SwitchData, locate_macs
 from homeassistant.config_entries import ConfigEntry
@@ -71,6 +72,7 @@ class SlowData:
     system: SystemInfo
     boot_time: datetime | None = None
     chassis: Chassis | None = None
+    temperatures: list[Temperature] = field(default_factory=list)
     bridge_ports: dict[int, int] = field(default_factory=dict)
     fdb: list[FdbEntry] = field(default_factory=list)
     lldp: Lldp | None = None
@@ -83,6 +85,7 @@ class SlowData:
 # Optional reads of the slow coordinator: SlowData field and client getter.
 SLOW_READS: tuple[tuple[str, str], ...] = (
     ("chassis", "get_chassis"),
+    ("temperatures", "get_temperatures"),
     ("bridge_ports", "get_bridge_ports"),
     ("fdb", "get_fdb"),
     ("lldp", "get_lldp"),

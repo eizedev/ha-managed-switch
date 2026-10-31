@@ -9,6 +9,7 @@
 | PoE consumption | power the powered devices draw, watts |
 | Spanning tree changes | how often the topology changed since the restart (off by default) |
 | Switch events | see [Events](events.md) |
+| Temperature *name* | one per temperature sensor the switch reports, °C, named as the switch names it (for example *Temperature PHY*; the sensor's number without a name); switches with the ENTITY-SENSOR-MIB, and the HPE Instant On 1930 8G 2SFP. A sensor that appears later gets its entity with the next reading |
 
 ![A switch's device page: PoE consumption, and per port the device, link, PoE and speed](assets/screenshots/device-switch.png)
 

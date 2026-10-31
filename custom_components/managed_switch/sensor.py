@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from aiosnmpswitch import Interface, OperStatus, PseDetectionStatus, PsePort
+from aiosnmpswitch import Interface, OperStatus, PseDetectionStatus, PsePort, SensorStatus
 from aiosnmpswitch.helpers import port_name
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -15,7 +15,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfDataRate, UnitOfPower, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -155,6 +155,19 @@ async def async_setup_entry(
     ]
     async_add_entities(entities)
 
+    # Temperature sensors, also those first read later (a failed first read, a module added).
+    known: set[int] = set()
+
+    @callback
+    def add_temperatures() -> None:
+        new = [t for t in runtime.slow.data.temperatures if t.index not in known]
+        known.update(t.index for t in new)
+        if new:
+            async_add_entities(TemperatureSensor(entry, runtime.slow, t.index, t.name) for t in new)
+
+    add_temperatures()
+    entry.async_on_unload(runtime.slow.async_add_listener(add_temperatures))
+
     def add_port_sensors(new: list[Interface]) -> None:
         port_entities: list[SensorEntity] = []
         for interface in new:
@@ -185,6 +198,36 @@ class SwitchSensor(SwitchEntity[SlowCoordinator], SensorEntity):
     def native_value(self) -> datetime | int | None:
         """The value from the latest tables."""
         return self.entity_description.value(self.coordinator.data)
+
+
+class TemperatureSensor(SwitchEntity[SlowCoordinator], SensorEntity):
+    """One temperature sensor of the switch, named as the switch names it."""
+
+    _attr_device_class = SensorDeviceClass.TEMPERATURE
+    _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(
+        self, entry: SwitchConfigEntry, coordinator: SlowCoordinator, index: int, name: str | None
+    ) -> None:
+        """Describe the sensor by its index; the name goes into the entity name."""
+        super().__init__(
+            entry,
+            coordinator,
+            SensorEntityDescription(key=f"temperature_{index}", translation_key="temperature"),
+        )
+        self.index = index
+        self._attr_translation_placeholders = {"sensor": name or str(index)}
+
+    @property
+    def native_value(self) -> float | None:
+        """The reading, while the sensor reports itself working."""
+        reading = next(
+            (t for t in self.coordinator.data.temperatures if t.index == self.index), None
+        )
+        if reading is None or reading.status not in (None, SensorStatus.OK):
+            return None
+        return reading.celsius
 
 
 class PortSensor(PortEntity[FastCoordinator], SensorEntity):

@@ -178,6 +178,9 @@
           "test": "Test",
           "other_fault": "Anderer Fehler"
         }
+      },
+      "temperature": {
+        "name": "Temperatur {sensor}"
       }
     }
   },

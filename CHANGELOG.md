@@ -6,6 +6,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-30
+
+### Added
+
+- A temperature sensor per sensor the switch reports, in °C, named as the switch names it:
+  switches with the ENTITY-SENSOR-MIB, and the HPE Instant On 1930 8G 2SFP from its own table
+  (aiosnmpswitch 0.3.0). The HPE 1920S reports no temperature. A sensor that appears later gets
+  its entity with the next reading. Diagnostics list the readings, without sensor names.
+
 ## [0.3.0] - 2026-10-30
 
 ### Changed
@@ -90,7 +99,8 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.2.0...v0.2.1

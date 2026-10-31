@@ -37,3 +37,8 @@ async def test_diagnostics_without_lldp_and_poe(hass: HomeAssistant) -> None:
     result = await async_get_config_entry_diagnostics(hass, entry)
     assert result["lldp"] == {"chassis_id_subtype": None, "local_ports": 0, "neighbours": 0}
     assert result["poe"] == {"supplies": 0, "ports": 0}
+    assert result["temperatures"] == [
+        {"index": 68420481, "celsius": 54.0, "status": 1},
+        {"index": 68420482, "celsius": 55.0, "status": 1},
+    ]
+    assert "PHY" not in str(result)  # sensor names stay out, as all names do
