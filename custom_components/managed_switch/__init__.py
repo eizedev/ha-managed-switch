@@ -46,14 +46,16 @@ from .coordinator import (
     get_hub,
     map_error,
 )
+from .frontend import async_register_card
 
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.EVENT, Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register the WebSocket command the switch card uses."""
+    """Register the switch card and the WebSocket command it uses."""
     websocket.async_setup(hass)
+    await async_register_card(hass)
     return True
 
 

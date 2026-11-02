@@ -1,6 +1,7 @@
 {
   "domain": "managed_switch",
   "name": "Managed Switch (SNMP)",
+  "after_dependencies": ["frontend", "http"],
   "codeowners": ["@eizedev"],
   "config_flow": true,
   "documentation": "https://ha-managed-switch.eize.dev/",
@@ -9,5 +10,5 @@
   "issue_tracker": "https://github.com/eizedev/ha-managed-switch/issues",
   "loggers": ["aiosnmpswitch", "pysnmp"],
   "requirements": ["aiosnmpswitch==0.3.0"],
-  "version": "0.5.1"
+  "version": "0.6.0"
 }

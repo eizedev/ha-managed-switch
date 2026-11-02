@@ -65,7 +65,7 @@ Ready automations for notifications; import one, then create an automation per s
 - [Entities](https://ha-managed-switch.eize.dev/entities/) and [Events](https://ha-managed-switch.eize.dev/events/): what each one means, the blueprint
 - [Dashboard](https://ha-managed-switch.eize.dev/dashboard/): a port overview to paste
 - [Ideas and automations](https://ha-managed-switch.eize.dev/ideas/): link lost, slow port, PoE, busy port
-- [Switch card](https://ha-managed-switch.eize.dev/card/): a switch's front panel ([managed-switch-card](https://github.com/eizedev/managed-switch-card))
+- [Switch card](https://ha-managed-switch.eize.dev/card/): a switch's front panel, included with the integration
 - [Troubleshooting](https://ha-managed-switch.eize.dev/troubleshooting/)
 
 The SNMP part is the library [aiosnmpswitch](https://aiosnmpswitch.eize.dev/).
