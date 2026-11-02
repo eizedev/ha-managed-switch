@@ -85,7 +85,7 @@ async def main(args: argparse.Namespace) -> None:
             lambda m: print("console:", m.text, file=sys.stderr) if m.type == "error" else None,
         )
         try:
-            await tour(page, args.card)
+            await tour(page)
         except Exception:
             await page.screenshot(path=OUT / "failed.png")  # where it stopped; not committed
             raise
@@ -93,7 +93,7 @@ async def main(args: argparse.Namespace) -> None:
             await browser.close()
 
 
-async def tour(page: Page, card_bundle: Path | None) -> None:
+async def tour(page: Page) -> None:
     """Photograph the documented pages."""
     await login(page)
     await setup_dialog(page)
@@ -117,14 +117,11 @@ async def tour(page: Page, card_bundle: Path | None) -> None:
     await page.goto(f"{BASE}/switch-ports/ports")
     await shoot(page, "dashboard")
 
-    if card_bundle is not None:
-        await card(page, card_bundle)
+    await card(page)
 
 
-async def card(page: Page, bundle: Path) -> None:
-    """Load the switch card (a build of managed-switch-card) and photograph it for each switch."""
-    target = HERE / ".config" / "www" / "managed-switch-card.js"  # run.py creates www/
-    await asyncio.to_thread(target.write_bytes, await asyncio.to_thread(bundle.read_bytes))
+async def card(page: Page) -> None:
+    """Photograph the switch card (loaded by the integration) for each switch."""
     devices = await page.evaluate(
         f"""async () => ['switch_1', 'switch_2', 'switch_3'].map(
             (s) => {HASS}.entities[`event.${{s}}_switch_events`]?.device_id)"""
@@ -144,8 +141,6 @@ async def card(page: Page, bundle: Path) -> None:
     }
     await page.evaluate(
         f"""async (config) => {{
-            await {HASS}.callWS({{type: 'lovelace/resources/create', res_type: 'module',
-                url: '/local/managed-switch-card.js?v=' + Date.now()}});
             await {HASS}.callWS({{type: 'lovelace/dashboards/create', url_path: 'switch-card',
                 title: 'Switch card', icon: 'mdi:switch', mode: 'storage', require_admin: false,
                 show_in_sidebar: true}});
@@ -163,7 +158,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else None)
     parser.add_argument("--browser", default="msedge", choices=["msedge", "chrome", "chromium"])
     parser.add_argument("--scheme", default="light", choices=["dark", "light"])
-    parser.add_argument(
-        "--card", type=Path, help="a build of managed-switch-card to photograph as well"
-    )
     asyncio.run(main(parser.parse_args()))

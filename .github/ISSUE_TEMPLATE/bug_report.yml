@@ -9,6 +9,13 @@ body:
         IP addresses and device names. Download the integration's diagnostics instead
         (Settings, Devices & services, Managed Switch (SNMP), the three dots, Download
         diagnostics); they contain no addresses or names.
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options: ["Integration", "Switch card"]
+    validations:
+      required: true
   - type: input
     id: version
     attributes:

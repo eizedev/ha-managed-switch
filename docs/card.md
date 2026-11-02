@@ -1,25 +1,20 @@
 # Switch card
 
-[managed-switch-card](https://github.com/eizedev/managed-switch-card) draws a switch like its own
+The switch card comes with the integration and draws a switch like its own
 web interface: every port coloured by link and speed, uplinks to other switches, trunk members,
 PoE delivering power, and the device on each port.
 
 ![Three switches as cards: green ports at 1 Gbit/s, orange at 100 Mbit/s, empty without link, a link symbol on the ports between the switches, the device name under each port](assets/screenshots/card.png)
 
-## Install
+## Add it
 
-The card needs this integration in version 0.2.0 or newer.
+The integration loads the card in Home Assistant; there is nothing to install. Edit a dashboard,
+*Add card*, **Managed Switch**, and choose the switch. One card per switch. After an update of the
+integration, reload the browser once.
 
-[![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eizedev&repository=managed-switch-card&category=plugin)
-
-Or in HACS: the three dots, *Custom repositories*, add this URL with the type *Dashboard*:
-
-```text
-https://github.com/eizedev/managed-switch-card
-```
-
-Install **Managed Switch Card** and reload the browser. Then edit a dashboard, *Add card*,
-**Managed Switch**, and choose the switch. One card per switch.
+If you installed the card on its own before (the HACS dashboard repository
+`eizedev/managed-switch-card`), remove it in HACS and its entry under *Settings*, *Dashboards*,
+*Resources*; the integration's copy is the current one.
 
 ## What it shows
 
@@ -41,7 +36,7 @@ Under each port is the device connected to it, as the port's device sensor names
 same); a click opens the device sensor. The header shows the switch's PoE consumption and budget.
 
 While Home Assistant starts or a switch is set up again, the card keeps its last picture and tries
-again after 15 seconds. With an integration older than 0.2.0 it says so.
+again after 15 seconds.
 
 ## Options
 
@@ -62,8 +57,8 @@ layout:                                      # optional: your own front panel, b
 
 The card knows the front panel of the tested models (HPE OfficeConnect 1920S 8G, HPE Instant On
 1930 8G 2SFP). Other switches get their ports in one row, or odd numbers above even ones beyond
-twelve; `layout` draws them as your switch looks. A layout for your model is welcome in the
-[card's repository](https://github.com/eizedev/managed-switch-card/blob/main/CONTRIBUTING.md).
+twelve; `layout` draws them as your switch looks. A layout for your model is welcome
+([how](https://github.com/eizedev/ha-managed-switch/blob/main/CONTRIBUTING.md#a-switch-layout-for-the-card)).
 
 ## For developers: what the card reads
 

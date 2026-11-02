@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-02
+
+### Added
+
+- The switch card comes with the integration: it loads in Home Assistant on its own, with
+  nothing to install, and is updated together with the integration. Its source moved here from
+  `eizedev/managed-switch-card`. If you installed the card from that repository, remove it in
+  HACS and its dashboard resource. Bug reports and feature requests ask which part they are
+  about.
+  [#32](https://github.com/eizedev/ha-managed-switch/issues/32)
+
 ## [0.5.1] - 2026-11-02
 
 ### Fixed
@@ -117,7 +128,8 @@ First release.
 - Switch events (uplink or trunk down, slower port, restart, new device) and a notification
   blueprint; diagnostics without addresses; an example dashboard.
 
-[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/eizedev/ha-managed-switch/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/eizedev/ha-managed-switch/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/eizedev/ha-managed-switch/compare/v0.3.0...v0.4.0

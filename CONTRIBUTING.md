@@ -22,6 +22,18 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy
 ```
 
+The switch card (TypeScript, Lit) lives in `card/` and is built into
+`custom_components/managed_switch/www/managed-switch-card.js`, which is committed: HACS installs
+the integration's folder as it is in the repository. After a change to the card, or to the
+version in `manifest.json`, build it again and commit the bundle; CI fails if it differs from a
+fresh build.
+
+```sh
+cd card
+npm ci --ignore-scripts
+npm run typecheck && npm test && npm run build
+```
+
 The tests run against anonymized recordings of three real switches (`tests/fixtures/`, made
 with the library's diagnostics and anonymizer); they need no switch and no running Home
 Assistant.
@@ -38,15 +50,28 @@ uv run --no-project --with-requirements scripts/demo/requirements.txt \
 ```
 
 The screenshots in `docs/assets/screenshots/` come from it: with the demo running, run
-`scripts/demo/screenshots.py` in a second terminal (same `uv run` prefix). Run it again whenever
-the dialogs or pages change; it needs an installed Edge or Chrome (`--browser chrome`), or
+`scripts/demo/screenshots.py` in a second terminal (same `uv run` prefix). It photographs the
+switch card too. Run it again whenever the dialogs, pages or the card change; it needs an installed Edge or Chrome (`--browser chrome`), or
 `playwright install chromium` and `--browser chromium`.
+
+## A switch layout for the card
+
+The card draws known models as their front panel and every other switch as one or two rows of
+ports. To add a model:
+
+1. Find its `sysObjectID`: in Home Assistant, the switch's device page, *Download diagnostics*
+   (`system.object_id`).
+2. Note the port names in the order of the front panel, row by row, and which are SFP slots.
+3. Try it in the card's YAML first (`layout:`, see the [card page](docs/card.md)), then open a
+   pull request that adds it to `MODEL_LAYOUTS` in `card/src/model.ts` with a test, or an issue
+   with the same information.
 
 ## Rules for changes
 
 - **Read only.** The integration never changes a switch setting.
 - **Texts in two languages.** Every user-facing text goes into `strings.json`,
-  `translations/en.json` and `translations/de.json`.
+  `translations/en.json` and `translations/de.json`; the card's texts into `WORDS` in
+  `card/src/model.ts`.
 - **No personal data** in code, docs or test data.
 - `tests/test_privacy.py` fails on MAC and IP addresses that may be real, in the files and in
   every line your unpushed commits add. Run the tests before you push: removing an address in a
@@ -60,7 +85,8 @@ Releases come from a tag `vX.Y.Z` on `main`:
 
 1. In a pull request, rename `[Unreleased]` in CHANGELOG.md to `[X.Y.Z] - <date>`, add an empty
    `[Unreleased]` above it and the compare links below, and set `version` in `manifest.json` to
-   `X.Y.Z` (a test checks that the manifest's version has a changelog section).
+   `X.Y.Z` (a test checks that the manifest's version has a changelog section), then build the
+   card again, so the bundle carries the new version.
 2. After the merge, wait for the *Docs* run (the release notes link the website), then tag the
    commit the merge created on `main` (not the pull request's own commits, which a squash merge
    leaves out) `vX.Y.Z` and push the tag.

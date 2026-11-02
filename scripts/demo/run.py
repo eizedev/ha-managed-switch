@@ -125,8 +125,6 @@ async def main(args: argparse.Namespace) -> None:
         shutil.rmtree(CONFIG)
     first_run = not CONFIG.exists()
     (CONFIG / "custom_components").mkdir(parents=True, exist_ok=True)
-    # /local/ (the switch card) is served only if www/ exists when Home Assistant starts
-    (CONFIG / "www").mkdir(exist_ok=True)
     link("managed_switch", REPO / "custom_components" / "managed_switch")
     link("demo_devices", HERE / "demo_devices")
     ideas = CONFIG / "ideas"

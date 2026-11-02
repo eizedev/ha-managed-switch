@@ -16,6 +16,7 @@ uv sync                       # environment from uv.lock (Home Assistant and its
 uv run pytest --cov           # coverage must stay at 100 %
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                   # strict
+cd card && npm ci --ignore-scripts && npm run typecheck && npm test && npm run build
 ```
 
 hassfest and the HACS check run in CI only.
@@ -28,7 +29,7 @@ hassfest and the HACS check run in CI only.
 - **Coordinators poll, entities never do.** Fast coordinator: interfaces (link, speed, counters,
   rates). Slow coordinator: system, then the optional reads in `SLOW_READS`; a failing optional
   read keeps its last value, only the system read failing fails the update.
-- **Stable identities for the planned card**: entity unique IDs are
+- **Stable identities for the card**: entity unique IDs are
   `<switch MAC>_<ifIndex>_<key>` and `<switch MAC>_<key>`, each entity has a fixed
   `translation_key`. Do not rename keys.
 - **Names of devices** come from the device registry (`devices.registry_name`), never from this
@@ -51,6 +52,13 @@ hassfest and the HACS check run in CI only.
   `docs/assets/site.css` is copied in at build time and not committed. Help links in the config
   flow point to sections of `docs/configuration.md` (`DOCS_*` in `config_flow.py`). The example
   dashboard lives once, in `docs/assets/example-dashboard.yaml`; the blueprint in `blueprints/`.
+
+- **The switch card** is part of this repository: source in `card/` (TypeScript, Lit, logic in
+  `card/src/model.ts` as pure functions with tests), bundled into
+  `custom_components/managed_switch/www/managed-switch-card.js`. Commit the bundle after every
+  card change and every version change (CI compares it with a fresh build). `frontend.py`
+  serves it and loads it as an extra frontend module; don't add it to the users' dashboard
+  resources. The card reads only: `managed_switch/ports` and entity states.
 
 - **Screenshots** come from the demo instance in `scripts/demo/` (CONTRIBUTING.md, "Demo instance
   and screenshots"); regenerate them when dialogs or pages change, never take them from a real
