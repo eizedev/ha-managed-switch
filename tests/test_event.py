@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant
+import pytest
 
 from custom_components.managed_switch.coordinator import get_hub
+from custom_components.managed_switch.event import _PortSpeed
 
 from .conftest import make_entry, state, transport
 
@@ -65,9 +67,58 @@ async def test_speed_dropped(hass: HomeAssistant) -> None:
     fake.set(f"{HIGH_SPEED}.1", 100)  # came back at 100 Mbit/s instead of 1000
     await entry.runtime_data.fast.async_refresh()
     await hass.async_block_till_done()
+    assert state(hass, EVENT).state == "unknown"  # one reading may be link negotiation
+    await entry.runtime_data.fast.async_refresh()
+    await hass.async_block_till_done()
     attributes = last(hass)
     assert attributes["event_type"] == "speed_dropped"
     assert (attributes["speed"], attributes["previous"]) == (100, 1000)
+
+
+START = datetime(2026, 11, 2, tzinfo=UTC)
+POLL = timedelta(seconds=30).total_seconds() / 60
+
+
+def drops(held: int | None, readings: list[tuple[float, int | None]]) -> list[tuple[int, int]]:
+    """Feed (minute, speed) readings after a startup speed; return (reading, previous) drops."""
+    port = _PortSpeed(held, held, START, 1) if held else _PortSpeed(None)
+    found = []
+    for number, (minute, speed) in enumerate(readings):
+        previous = port.update(speed, START + timedelta(minutes=minute))
+        if previous:
+            found.append((number, previous))
+    return found
+
+
+def steady(speed: int, start: float, minutes: float) -> list[tuple[float, int | None]]:
+    """Readings at one speed every poll."""
+    return [(start + n * POLL, speed) for n in range(int(minutes / POLL))]
+
+
+@pytest.mark.parametrize(
+    ("held", "readings", "expected"),
+    [
+        # A TV negotiates 1000 for a few seconds before it settles at 100.
+        pytest.param(100, [(0.5, 1000), (1, 100), (1.5, 100)], [], id="spike"),
+        pytest.param(1000, [(0.5, 1000), (1, 100), (1.5, 100)], [(2, 1000)], id="settled"),
+        pytest.param(1000, [(0.5, 1000), (1, 100), (1.5, 1000)], [], id="back-up"),
+        pytest.param(1000, [(0.5, None), (1, 100), (1.5, 100)], [(2, 1000)], id="via-down"),
+        # A console in rest mode runs at 1000 for a few minutes while it installs updates.
+        pytest.param(100, [*steady(1000, 0, 10), (10, 100), (10.5, 100)], [], id="minutes"),
+        pytest.param(100, [*steady(1000, 0, 61), (61, 100), (61.5, 100)], [(123, 1000)], id="hour"),
+        pytest.param(
+            1000,
+            [(1, 100), (1.5, 100), (2, 100), *steady(1000, 3, 20), (23, 100), (23.5, 100)],
+            [(1, 1000)],
+            id="once",
+        ),
+        pytest.param(None, [(0, 1000), (0.5, 100), (1, 100)], [], id="down-at-startup"),
+    ],
+)
+def test_speed_settles(
+    held: int | None, readings: list[tuple[float, int | None]], expected: list[tuple[int, int]]
+) -> None:
+    assert drops(held, readings) == expected
 
 
 async def test_restarted(hass: HomeAssistant, freezer: FrozenDateTimeFactory) -> None:

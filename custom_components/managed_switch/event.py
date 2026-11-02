@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 
 from aiosnmpswitch import Interface, OperStatus
@@ -10,7 +11,9 @@ from homeassistant.components.event import EventEntity, EventEntityDescription
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.util import dt as dt_util
 
+from .const import SPEED_HELD, SPEED_SETTLE_POLLS
 from .coordinator import SIGNAL_NEW_DEVICE, FastCoordinator, SwitchConfigEntry, get_hub, switch_data
 from .devices import registry_name
 from .entity import SwitchEntity
@@ -40,6 +43,35 @@ def _is_up(interface: Interface | None) -> bool:
     return interface is not None and interface.oper_status is OperStatus.UP
 
 
+@dataclass(slots=True)
+class _PortSpeed:
+    """A port's speed, settled before a drop counts (SPEED_SETTLE_POLLS, SPEED_HELD)."""
+
+    held: int | None
+    """The speed a drop is measured against: read at startup, held long enough, or reported."""
+    speed: int | None = None
+    """The current run of equal readings while the link is up."""
+    since: datetime | None = None
+    polls: int = 0
+
+    def update(self, speed: int | None, now: datetime) -> int | None:
+        """Take a reading, None while the link is down; return the held speed if it dropped."""
+        if not speed:
+            # A link that drops keeps its held speed: a cable plugged in again at a lower
+            # speed is the drop worth reporting.
+            self.speed, self.since, self.polls = None, None, 0
+            return None
+        if speed != self.speed or self.since is None:
+            self.speed, self.since, self.polls = speed, now, 0
+        self.polls += 1
+        if self.polls == SPEED_SETTLE_POLLS and self.held and speed < self.held:
+            previous, self.held = self.held, speed
+            return previous
+        if now - self.since >= SPEED_HELD:
+            self.held = speed
+        return None
+
+
 class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
     """Fires when something on the switch changes that may need attention."""
 
@@ -54,10 +86,13 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
         """Start from the current readings, so nothing fires for the state at startup."""
         super().__init__(entry, coordinator, description)
         self._interfaces = dict(coordinator.data.interfaces)
-        self._last_speed = {
-            index: i.high_speed
-            for index, i in self._interfaces.items()
+        # The speeds at startup count as held: they have most likely been there for a while.
+        now = dt_util.utcnow()
+        self._speeds = {
+            index: _PortSpeed(i.high_speed, i.high_speed, now, 1)
             if _is_up(i) and i.high_speed
+            else _PortSpeed(None)
+            for index, i in self._interfaces.items()
         }
         self._boot_time: datetime | None = entry.runtime_data.slow.data.boot_time
         # Uplinks as they were while up: LLDP forgets a neighbour soon after its link drops, and
@@ -89,24 +124,19 @@ class SwitchEvent(SwitchEntity[FastCoordinator], EventEntity):
         current = self._watched()
         watched = current | self._watched_before
         self._watched_before = current
+        read_at = dt_util.utcnow()
         for index, now in interfaces.items():
             before = self._interfaces.get(index)
             name = port_name(now)
             if index in watched and _is_up(before) and not _is_up(now):
                 self._fire(EVENT_UPLINK_DOWN, {"port": name, "if_index": index})
-            if _is_up(now) and now.high_speed:
-                last = self._last_speed.get(index)
-                if last and now.high_speed < last:
-                    self._fire(
-                        EVENT_SPEED_DROPPED,
-                        {
-                            "port": name,
-                            "if_index": index,
-                            "speed": now.high_speed,
-                            "previous": last,
-                        },
-                    )
-                self._last_speed[index] = now.high_speed
+            speed = now.high_speed if _is_up(now) else None
+            previous = self._speeds.setdefault(index, _PortSpeed(None)).update(speed, read_at)
+            if previous:
+                self._fire(
+                    EVENT_SPEED_DROPPED,
+                    {"port": name, "if_index": index, "speed": speed, "previous": previous},
+                )
         self._interfaces = dict(interfaces)
         super()._handle_coordinator_update()
 
