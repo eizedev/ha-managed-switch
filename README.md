@@ -12,8 +12,8 @@
 Shows your **managed network switches** in Home Assistant over SNMP: every port with link,
 speed, traffic and PoE, and **which device is connected to which port**, across all your
 switches, named after the devices Home Assistant already knows. Events tell you when an uplink
-or trunk goes down, a port comes back slower, a switch restarts or a new device appears. Read
-only: it never changes a setting.
+or trunk goes down, a port comes back slower, a switch restarts or a new device appears, and a
+dashboard card draws each switch's front panel. Read only: it never changes a setting.
 
 [![Open your Home Assistant instance and open this repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=eizedev&repository=ha-managed-switch&category=integration)
 [![Open your Home Assistant instance and start setting up the integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=managed_switch)
@@ -34,9 +34,19 @@ only: it never changes a setting.
   registry) and how many devices are on it, PoE status, and on request received and sent
   traffic and errors.
 - One events entity per switch with a ready blueprint for notifications.
+- A dashboard card with the switch's front panel, included (see below).
 - SNMPv3 (recommended) or v2c, standard MIBs, plus the HPE 1930's own sensor table:
   vendor-neutral. Tested on HPE OfficeConnect 1920S and HPE Instant On 1930; other managed
   switches with SNMP are expected to work.
+
+## Switch card
+
+The integration comes with a card that draws a switch like its own web interface: every port
+coloured by link and speed, uplinks to other switches, trunks, PoE delivering power, and the
+device on each port. There is nothing to install: edit a dashboard, *Add card*, **Managed
+Switch**, and choose the switch. Details: [Switch card](https://ha-managed-switch.eize.dev/card/).
+
+<img src="https://raw.githubusercontent.com/eizedev/ha-managed-switch/main/docs/assets/screenshots/card.png" alt="Three switches as cards: green ports at 1 Gbit/s, orange at 100 Mbit/s, empty without link, a link symbol on the ports between the switches, the device name under each port" width="100%">
 
 ## Install
 
@@ -65,7 +75,7 @@ Ready automations for notifications; import one, then create an automation per s
 - [Entities](https://ha-managed-switch.eize.dev/entities/) and [Events](https://ha-managed-switch.eize.dev/events/): what each one means, the blueprint
 - [Dashboard](https://ha-managed-switch.eize.dev/dashboard/): a port overview to paste
 - [Ideas and automations](https://ha-managed-switch.eize.dev/ideas/): link lost, slow port, PoE, busy port
-- [Switch card](https://ha-managed-switch.eize.dev/card/): a switch's front panel, included with the integration
+- [Switch card](https://ha-managed-switch.eize.dev/card/): colours, options, your own layout, what the card reads
 - [Troubleshooting](https://ha-managed-switch.eize.dev/troubleshooting/)
 
 The SNMP part is the library [aiosnmpswitch](https://aiosnmpswitch.eize.dev/).

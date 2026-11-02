@@ -5,7 +5,8 @@
 This integration only reads from managed switches over SNMP, through the library
 [aiosnmpswitch](https://github.com/eizedev/aiosnmpswitch). In scope: anything in this repository
 that could leak a community or SNMPv3 passwords, change a switch setting, or let a malicious
-switch answer harm Home Assistant. Problems in the library itself are best
+switch answer harm Home Assistant, including the switch card in the browser (for example a
+device or port name that ends up as markup). Problems in the library itself are best
 reported there.
 
 Vulnerabilities in a switch's firmware belong to its vendor.

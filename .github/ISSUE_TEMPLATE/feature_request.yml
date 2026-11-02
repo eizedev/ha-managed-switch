@@ -2,6 +2,13 @@ name: Feature request
 description: Suggest something the integration should show or do.
 labels: ["enhancement"]
 body:
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options: ["Integration", "Switch card"]
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:

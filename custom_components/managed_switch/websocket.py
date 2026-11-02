@@ -1,6 +1,6 @@
 """WebSocket command for the switch card: one switch's ports with their entities and layout.
 
-The card (managed-switch-card) asks for a device and draws its front panel; it needs to know which
+The card (`card/`, shipped in `www/`) asks for a device and draws its front panel; it needs to know which
 entity belongs to which port and role, which entity IDs (that follow the user's language) do not
 say reliably.
 

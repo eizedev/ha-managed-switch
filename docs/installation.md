@@ -29,7 +29,8 @@ Install **Managed Switch (SNMP)**, then restart Home Assistant.
 
 HACS shows a new release as an update (also under Settings, Updates). Install it and restart
 Home Assistant. Without HACS, replace the folder's content with the new release's zip and
-restart. The switches, their entities and settings stay.
+restart. The switches, their entities and settings stay. The [switch card](card.md) is updated
+with the integration; reload the browser once to get the new version.
 
 ## Adding your switches
 
@@ -39,3 +40,6 @@ Add the integration once per switch (Settings, Devices & services, Add integrati
 Switch*). Before that, give Home Assistant read access on each switch:
 [SNMP access](configuration.md#snmp-access). Add all your switches: only with all of them can
 the integration tell the links between switches from the ports your devices are on.
+
+The [switch card](card.md) comes with the integration: after the first switch, add it to a
+dashboard with *Add card*, **Managed Switch**.
