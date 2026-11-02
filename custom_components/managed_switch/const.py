@@ -26,6 +26,11 @@ MIN_SLOW_INTERVAL: Final = 60
 # One SNMP request may take this long per try; a walk is many requests.
 REQUEST_TIMEOUT: Final = 5.0
 REQUEST_RETRIES: Final = 1
+# A slower port is reported once it reads the lower speed this many polls in a row, and only
+# against a speed it held at least this long: link negotiation shows another speed for a few
+# seconds, and some devices run faster for minutes (a console installing updates in rest mode).
+SPEED_SETTLE_POLLS: Final = 2
+SPEED_HELD: Final = timedelta(hours=1)
 
 DOCS_URL: Final = "https://ha-managed-switch.eize.dev/"
 
